@@ -1,0 +1,13 @@
+#!/bin/sh -e
+# Copyright 2024 Canonical Ltd.
+# See LICENSE file for licensing details.
+
+# export SLURM_CONF so that slurmdbd.conf is found by slurmdbd.
+export SLURM_CONF="${SNAP_DATA}/etc/slurm/slurmdbd.conf"
+# Do not start slurmdbd unless slurmdbd.conf exists and is readable.
+if [ ! -r "${SLURM_CONF}" ]; then
+  echo "slurmdbd condition check failed. slurmdbd.conf not found."
+  exit 1
+fi
+
+"${SNAP}"/sbin/slurmdbd -D

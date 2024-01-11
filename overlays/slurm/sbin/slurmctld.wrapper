@@ -1,0 +1,13 @@
+#!/bin/sh -e
+# Copyright 2024 Canonical Ltd.
+# See LICENSE file for licensing details.
+
+# Do not start slurmctld unless slurm.conf exists and is readable.
+if [ ! -r "${SNAP_DATA}/etc/slurm/slurm.conf" ]; then
+  echo "slurmctld condition check failed. slurm.conf not found."
+  exit 1
+fi
+
+"${SNAP}"/sbin/slurmctld \
+  -f "${SNAP_DATA}/etc/slurm/slurm.conf" \
+  -L "${SNAP_DATA}/var/log/slurm/slurmctld.log" -D

@@ -1,0 +1,14 @@
+#!/bin/sh  -e
+# Copyright 2024 Canonical Ltd.
+# See LICENSE file for licensing details.
+
+# Load in snap configuration defaults.
+. "${SNAP_DATA}/etc/default/slurm-snap"
+
+# Start munge authentication services.
+"${SNAP}"/usr/sbin/munged \
+  --key-file="${SNAP_DATA}/etc/munge/munge.key" \
+  --socket="${SNAP_DATA}/var/run/munge/munged.socket.2" \
+  --pid-file="${SNAP_DATA}/var/run/munge/munged.pid" \
+  --seed-file="${SNAP_DATA}/var/lib/munge/munge.seed" \
+  --num-threads="${MUNGE_NUM_THREADS}" --foreground

@@ -1,0 +1,16 @@
+#!/bin/sh -e
+# Copyright 2024 Canonical Ltd.
+# See LICENSE file for licensing details.
+
+# Do not start slurmrestd unless slurm.conf exists and is readable.
+if [ ! -r "${SNAP_DATA}/etc/slurm/slurm.conf" ]; then
+  echo "slurmrestd condition check failed. slurm.conf not found."
+  exit 1
+fi
+
+# Export invalid Slurm JWT token to activate JWT authentication in slurmrestd.
+# See for more details: https://slurm.schedmd.com/rest.html#jwt
+export SLURM_JWT=
+"${SNAP}"/sbin/slurmrestd \
+  -f "${SNAP_DATA}/etc/slurm/slurm.conf" \
+  "$(hostname -s):6820"

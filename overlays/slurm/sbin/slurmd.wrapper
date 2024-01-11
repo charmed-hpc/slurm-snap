@@ -1,0 +1,22 @@
+#!/bin/sh -e
+# Copyright 2024 Canonical Ltd.
+# See LICENSE file for licensing details.
+
+# Load in snap configuration defaults.
+. "${SNAP_DATA}/etc/default/slurm-snap"
+
+if [ -n "${SLURMD_CONF_SERVER}" ]; then
+  "${SNAP}"/sbin/slurmd \
+    --conf-server "${SLURMD_CONF_SERVER}" \
+    -f "${SNAP_DATA}/etc/slurm/slurm.conf" \
+    -d "${SNAP}/sbin/slurmstepd" \
+    -L "${SNAP_DATA}/var/log/slurm/slurmd.conf" -D
+elif [ -r "${SNAP_DATA}/etc/slurm/slurm.conf" ]; then
+  "${SNAP}"/sbin/slurmd \
+    -f "${SNAP_DATA}/etc/slurm/slurm.conf" \
+    -d "${SNAP}/sbin/slurmstepd" \
+    -L "${SNAP_DATA}/var/log/slurm/slurmd.conf" -D
+else
+  echo "slurmd condition check failed. No configuration servers or slurm.conf specified."
+  exit 1
+fi
