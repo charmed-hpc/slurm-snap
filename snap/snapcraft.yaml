@@ -16,6 +16,8 @@ compression: lzo
 package-repositories:
   - type: apt
     ppa: ubuntu-hpc/rocm-smi-lib
+environment:
+  PATH: $SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$SNAP/usr/local/bin:$SNAP/usr/local/sbin:$PATH
 
 apps:
   slurmctld:
@@ -41,97 +43,97 @@ apps:
   sacct:
     command: bin/sacct
     environment:
-      SLURM_CONF: $SNAP_DATA/etc/slurm/slurm.conf
+      SLURM_CONF: $SNAP_COMMON/etc/slurm/slurm.conf
   sacctmgr:
     command: bin/sacctmgr
     environment:
-      SLURM_CONF: $SNAP_DATA/etc/slurm/slurm.conf
+      SLURM_CONF: $SNAP_COMMON/etc/slurm/slurm.conf
   salloc:
     command: bin/salloc
     environment:
-      SLURM_CONF: $SNAP_DATA/etc/slurm/slurm.conf
+      SLURM_CONF: $SNAP_COMMON/etc/slurm/slurm.conf
   sattach:
     command: bin/sattach
     environment:
-      SLURM_CONF: $SNAP_DATA/etc/slurm/slurm.conf
+      SLURM_CONF: $SNAP_COMMON/etc/slurm/slurm.conf
   sbatch:
     command: bin/sbatch
     environment:
-      SLURM_CONF: $SNAP_DATA/etc/slurm/slurm.conf
+      SLURM_CONF: $SNAP_COMMON/etc/slurm/slurm.conf
   sbcast:
     command: bin/sbcast
     environment:
-      SLURM_CONF: $SNAP_DATA/etc/slurm/slurm.conf
+      SLURM_CONF: $SNAP_COMMON/etc/slurm/slurm.conf
   scancel:
     command: bin/scancel
     environment:
-      SLURM_CONF: $SNAP_DATA/etc/slurm/slurm.conf
+      SLURM_CONF: $SNAP_COMMON/etc/slurm/slurm.conf
   scontrol:
     command: bin/scontrol
     environment:
-      SLURM_CONF: $SNAP_DATA/etc/slurm/slurm.conf
+      SLURM_CONF: $SNAP_COMMON/etc/slurm/slurm.conf
   scrontab:
     command: bin/scrontab
     environment:
-      SLURM_CONF: $SNAP_DATA/etc/slurm/slurm.conf
+      SLURM_CONF: $SNAP_COMMON/etc/slurm/slurm.conf
   scrun:
     command: bin/scrun
     environment:
-      SLURM_CONF: $SNAP_DATA/etc/slurm/slurm.conf
+      SLURM_CONF: $SNAP_COMMON/etc/slurm/slurm.conf
   sdiag:
     command: bin/sdiag
     environment:
-      SLURM_CONF: $SNAP_DATA/etc/slurm/slurm.conf
+      SLURM_CONF: $SNAP_COMMON/etc/slurm/slurm.conf
   sh5util:
     command: bin/sh5util
     environment:
-      SLURM_CONF: $SNAP_DATA/etc/slurm/slurm.conf
+      SLURM_CONF: $SNAP_COMMON/etc/slurm/slurm.conf
   sinfo:
     command: bin/sinfo
     environment:
-      SLURM_CONF: $SNAP_DATA/etc/slurm/slurm.conf
+      SLURM_CONF: $SNAP_COMMON/etc/slurm/slurm.conf
   sprio:
     command: bin/sprio
     environment:
-      SLURM_CONF: $SNAP_DATA/etc/slurm/slurm.conf
+      SLURM_CONF: $SNAP_COMMON/etc/slurm/slurm.conf
   squeue:
     command: bin/squeue
     environment:
-      SLURM_CONF: $SNAP_DATA/etc/slurm/slurm.conf
+      SLURM_CONF: $SNAP_COMMON/etc/slurm/slurm.conf
   sreport:
     command: bin/sreport
     environment:
-      SLURM_CONF: $SNAP_DATA/etc/slurm/slurm.conf
+      SLURM_CONF: $SNAP_COMMON/etc/slurm/slurm.conf
   srun:
     command: bin/srun
     environment:
-      SLURM_CONF: $SNAP_DATA/etc/slurm/slurm.conf
+      SLURM_CONF: $SNAP_COMMON/etc/slurm/slurm.conf
   sshare:
     command: bin/sshare
     environment:
-      SLURM_CONF: $SNAP_DATA/etc/slurm/slurm.conf
+      SLURM_CONF: $SNAP_COMMON/etc/slurm/slurm.conf
   sstat:
     command: bin/sstat
     environment:
-      SLURM_CONF: $SNAP_DATA/etc/slurm/slurm.conf
+      SLURM_CONF: $SNAP_COMMON/etc/slurm/slurm.conf
   strigger:
     command: bin/strigger
     environment:
-      SLURM_CONF: $SNAP_DATA/etc/slurm/slurm.conf
+      SLURM_CONF: $SNAP_COMMON/etc/slurm/slurm.conf
   sview:
     command: bin/sview
     environment:
-      SLURM_CONF: $SNAP_DATA/etc/slurm/slurm.conf
+      SLURM_CONF: $SNAP_COMMON/etc/slurm/slurm.conf
 
   munged:
-    command: bin/munged.wrapper
+    command: sbin/munged.wrapper
     daemon: simple
   munge:
-    command: usr/bin/munge --socket $SNAP_DATA/var/run/munge/munged.socket.2
+    command: usr/bin/munge --socket $SNAP_COMMON/var/run/munge/munged.socket.2
   unmunge:
-    command: usr/bin/unmunge --socket $SNAP_DATA/var/run/munge/munged.socket.2
+    command: usr/bin/unmunge --socket $SNAP_COMMON/var/run/munge/munged.socket.2
   remunge:
-    command: usr/bin/remunge --socket $SNAP_DATA/var/run/munge/munged.socket.2
+    command: usr/bin/remunge --socket $SNAP_COMMON/var/run/munge/munged.socket.2
   mungekey:
     command: usr/sbin/mungekey
 
@@ -238,3 +240,20 @@ parts:
     source: overlays/munge
     organize:
       "overlays/munge/sbin/*": sbin/
+
+  snap-hooks:
+    source: .
+    build-attributes: [enable-patchelf]
+    plugin: python
+    build-packages:
+      - git
+      - python3-setuptools
+    python-requirements: [requirements.txt]
+    stage-packages:
+      - libpython3.10-stdlib
+      - libpython3.10-minimal
+      - python3-venv
+      - python3.10-minimal
+    override-build: |
+      craftctl default
+      snap-helpers write-hooks
