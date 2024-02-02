@@ -1,21 +1,32 @@
 #!/bin/sh -e
 # Copyright 2024 Canonical Ltd.
-# See LICENSE file for licensing details.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 
 # Load in snap configuration defaults.
-. "${SNAP_DATA}/etc/default/slurm-snap"
+. "${SNAP_COMMON}/.env"
 
 if [ -n "${SLURMD_CONF_SERVER}" ]; then
   "${SNAP}"/sbin/slurmd \
     --conf-server "${SLURMD_CONF_SERVER}" \
-    -f "${SNAP_DATA}/etc/slurm/slurm.conf" \
+    -f "${SNAP_COMMON}/etc/slurm/slurm.conf" \
     -d "${SNAP}/sbin/slurmstepd" \
-    -L "${SNAP_DATA}/var/log/slurm/slurmd.conf" -D
-elif [ -r "${SNAP_DATA}/etc/slurm/slurm.conf" ]; then
+    -L "${SNAP_COMMON}/var/log/slurm/slurmd.conf" -D
+elif [ -r "${SNAP_COMMON}/etc/slurm/slurm.conf" ]; then
   "${SNAP}"/sbin/slurmd \
-    -f "${SNAP_DATA}/etc/slurm/slurm.conf" \
+    -f "${SNAP_COMMON}/etc/slurm/slurm.conf" \
     -d "${SNAP}/sbin/slurmstepd" \
-    -L "${SNAP_DATA}/var/log/slurm/slurmd.conf" -D
+    -L "${SNAP_COMMON}/var/log/slurm/slurmd.conf" -D
 else
   echo "slurmd condition check failed. No configuration servers or slurm.conf specified."
   exit 1

@@ -3,7 +3,7 @@
 # See LICENSE file for licensing details.
 
 # export SLURM_CONF so that slurmdbd.conf is found by slurmdbd.
-export SLURM_CONF="${SNAP_DATA}/etc/slurm/slurmdbd.conf"
+export SLURM_CONF="${SNAP_COMMON}/etc/slurm/slurmdbd.conf"
 # Do not start slurmdbd unless slurmdbd.conf exists and is readable.
 if [ ! -r "${SLURM_CONF}" ]; then
   echo "slurmdbd condition check failed. slurmdbd.conf not found."
