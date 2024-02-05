@@ -17,6 +17,10 @@ package-repositories:
   - type: apt
     ppa: ubuntu-hpc/rocm-smi-lib
 environment:
+  # Need this PATH declaration so that the Python-based
+  # snap hooks can find the embedded Python interpreter with
+  # the necessary dependencies packaged in `site-packages`.
+  # yamllint disable-line rule:line-length
   PATH: $SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$SNAP/usr/local/bin:$SNAP/usr/local/sbin:$PATH
 
 apps:
