@@ -28,5 +28,5 @@ export SLURM_JWT=
 "${SNAP}"/sbin/slurmrestd \
   -f "${SNAP_COMMON}/etc/slurm/slurm.conf" \
   --max-connections "${SLURMRESTD_MAX_CONNECTIONS}" \
-  -t "${SLURMRESTD_MAX_THREAD_COUNT}"
+  -t "${SLURMRESTD_MAX_THREAD_COUNT}" \
   "$(hostname -s):6820"

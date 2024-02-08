@@ -22,5 +22,5 @@
   --socket "${SNAP_COMMON}/var/run/munge/munged.socket.2" \
   --pid-file "${SNAP_COMMON}/var/run/munge/munged.pid" \
   --seed-file "${SNAP_COMMON}/var/lib/munge/munge.seed" \
-  --num-threads "${MUNGE_MAX_THREAD_COUNT}" \
+  --num-threads "${MUNGED_MAX_THREAD_COUNT}" \
   --foreground

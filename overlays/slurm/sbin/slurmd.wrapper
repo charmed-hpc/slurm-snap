@@ -16,9 +16,9 @@
 # Load in snap configuration defaults.
 . "${SNAP_COMMON}/.env"
 
-if [ -n "${SLURMD_CONF_SERVER}" ]; then
+if [ -n "${SLURMD_CONFIG_SERVER}" ]; then
   "${SNAP}"/sbin/slurmd \
-    --conf-server "${SLURMD_CONF_SERVER}" \
+    --conf-server "${SLURMD_CONFIG_SERVER}" \
     -f "${SNAP_COMMON}/etc/slurm/slurm.conf" \
     -d "${SNAP}/sbin/slurmstepd" \
     -L "${SNAP_COMMON}/var/log/slurm/slurmd.conf" -D
