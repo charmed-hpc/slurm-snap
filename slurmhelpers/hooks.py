@@ -16,9 +16,7 @@
 
 import logging
 from pathlib import Path
-from typing import Dict
 
-import dotenv
 from snaphelpers import Snap
 
 from .log import log
@@ -40,7 +38,6 @@ def _setup_dirs() -> None:
     var = Path(snap.paths.common) / "var"
     for directory in [
         # etc - configuration files
-        etc / "default",
         etc / "munge",
         etc / "slurm",
         etc / "slurm" / "plugstack.conf.d",
@@ -71,24 +68,6 @@ def _setup_dirs() -> None:
     (var / "run" / "munge").chmod(0o755)
 
 
-def _update_global_config(config: Dict[str, str]) -> bool:
-    """Update the global configuration of the Slurm snap.
-
-    This function updates configuration specific to the snap
-    itself, not one of the bundled Slurm or munge services.
-    A `.env` file in $SNAP_COMMON is used to store configuration
-    values. These configuration values are used by service wrappers
-    to control how the wrapped service is launched by the snap.
-
-    Args:
-        config: Map of configuration values to update/set.
-    """
-    env_file = snap.paths.common / ".env"
-    for k, v in config.items():
-        logging.debug("Setting %s to %s.", k, v if v != "" else "''")
-        dotenv.set_key(env_file, k, v)
-
-
 @log(file=snap.paths.common / "hooks.log")
 def install(_: Snap) -> None:
     """Install hook for the Slurm snap.
@@ -109,11 +88,17 @@ def install(_: Snap) -> None:
     logging.info("Generating default munge.key secret.")
     munge.generate_key()
 
+    logging.info("Creating empty `slurm.conf` file.")
+    slurm.config_file.touch(0o644)
+
+    logging.info("Creating empty `slurmdbd.conf` file.")
+    slurmdbd.config_file.touch(0o644)
+
 
 @log(file=snap.paths.common / "hooks.log")
 def configure(_: Snap) -> None:
     """Configure hook for the Slurm snap."""
-    logging.debug("Executing snap `configure` hook.")
+    logging.info("Executing snap `configure` hook.")
     options = snap.config.get_options(
         "munge", "slurm", "slurmd", "slurmdbd", "slurmrestd"
     ).as_dict()
