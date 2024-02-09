@@ -146,15 +146,17 @@ included in the project:
     ```bash
     tox run -e fmt
     tox run -e lint
-    tox run -e unit
-    tox run -e integration
     ```
 
-5. Commit your changes in logical chunks. Please adhere to these [git commit
-   message guidelines](https://tbaggery.com/2008/04/19/a-note-about-git-commit-messages.html)
-   or your code is unlikely be merged into the main project. Use Git's
-   [interactive rebase](https://help.github.com/articles/about-git-rebase/)
-   feature to tidy up your commits before making them public.
+5. Commit your changes in logical chunks. Our project follows the 
+   [Conventional Commits specification, version 1.0.0](https://www.conventionalcommits.org/en/v1.0.0/).
+   Conventional commits create an explicit commit history; the make it easier for operators
+   and external contributors to quickly identify specific commits and understand what was changed.
+   Please follow the Conventional Commits specification when authoring your commits or
+   your code will unlikely be merged into the main project without. Asked to clean up your
+   commits by a slurm-snap maintainer? No problem! You can use Git's
+   [interactive rebase](https://help.github.com/articles/about-git-rebase/) feature to 
+   tidy up your commits before making them public.
 
 6. Locally merge (or rebase) the upstream development branch into your topic branch:
 
