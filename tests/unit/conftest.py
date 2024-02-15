@@ -15,10 +15,13 @@
 
 """Configure unit tests."""
 
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, PropertyMock
 
 import pytest
 from snaphelpers import Snap, SnapConfig, SnapConfigOptions, SnapServices
+from snaphelpers._ctl import ServiceInfo
+
+from slurmhelpers.models import Munge, Slurm, Slurmd, Slurmdbd, Slurmrestd
 
 
 @pytest.fixture
@@ -64,3 +67,44 @@ def snap_empty_config(env):
     snap.config = MagicMock(SnapConfig)
     snap.services = MagicMock(SnapServices)
     yield snap
+
+
+@pytest.fixture
+def base_model(snap):
+    """Create a mock `_BaseModel` object."""
+    service = MagicMock(ServiceInfo)
+    type(service).active = PropertyMock(return_value=False)
+    snap.services.list.return_value = {"test": service}
+    # Use the `Slurm` data model since `_BaseModel` is an abstract class.
+    # `_BaseModel` cannot be directly instantiated since `update_config`
+    # is an abstract method.
+    yield Slurm(snap)
+
+
+@pytest.fixture
+def munge(snap):
+    """Create a mock `Munge` object."""
+    yield Munge(snap)
+
+
+@pytest.fixture
+def slurm(snap):
+    """Create a mock `Slurm` object."""
+    yield Slurm(snap)
+
+
+@pytest.fixture
+def slurmd(snap):
+    """Create a mock `Slurmd` object."""
+    yield Slurmd(snap)
+
+
+@pytest.fixture
+def slurmdbd(snap):
+    yield Slurmdbd(snap)
+
+
+@pytest.fixture
+def slurmrestd(snap):
+    """Create a mock `Slurmrestd` object."""
+    yield Slurmrestd(snap)
