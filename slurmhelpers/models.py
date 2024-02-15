@@ -85,7 +85,7 @@ class _BaseModel(ABC):
         dotenv.set_key(self._env_file, key, value)
 
     @abstractmethod
-    def update_config(self, config: Dict[str, str]) -> None:
+    def update_config(self, config: Dict[str, str]) -> None:  # pragma: no cover
         """Update configuration specific to the service.
 
         Every model must have this method as it will be used
@@ -131,6 +131,10 @@ class Munge(_BaseModel):
         if self.key == v:
             logging.debug("No change for `munge.key` secret file. Not updating.")
             return
+
+        if not self.secret_file.exists():
+            logging.debug("Creating empty `munge.key` secret file.")
+            self.secret_file.touch(0o600)
 
         logging.info("Updating `munge.key` secret file to new key.")
         self.secret_file.write_bytes(base64.b64decode(v.encode()))
