@@ -19,19 +19,16 @@ from pathlib import Path
 
 from snaphelpers import Snap
 
-from .log import log
+from .log import setup_logging
 from .models import Munge, Slurm, Slurmd, Slurmdbd, Slurmrestd
 
-snap = Snap()
-munge = Munge(snap)
-slurm = Slurm(snap)
-slurmd = Slurmd(snap)
-slurmdbd = Slurmdbd(snap)
-slurmrestd = Slurmrestd(snap)
 
+def _setup_dirs(snap: Snap) -> None:
+    """Create directories needed by Slurm and Munge to function within the snap.
 
-def _setup_dirs() -> None:
-    """Create directories needed by Slurm and Munge to function within the snap."""
+    Args:
+        snap: The Snap instance.
+    """
     # Generate directories need by Slurm and Munge.
     logging.info("Provisioning required directories for Slurm and munge.")
     etc = Path(snap.paths.common) / "etc"
@@ -68,16 +65,22 @@ def _setup_dirs() -> None:
     (var / "run" / "munge").chmod(0o755)
 
 
-@log(file=snap.paths.common / "hooks.log")
-def install(_: Snap) -> None:
+def install(snap: Snap) -> None:
     """Install hook for the Slurm snap.
 
     The install hook will create the default directories
     required by munge and Slurm under $SNAP_DATA, set the default
     snap configuration, and generate a munge.key file for the host.
     """
+    setup_logging(snap.paths.common / "hooks.log")
+    munge = Munge(snap)
+    slurm = Slurm(snap)
+    slurmd = Slurmd(snap)
+    slurmdbd = Slurmdbd(snap)
+    slurmrestd = Slurmrestd(snap)
+
     logging.info("Executing snap `install` hook.")
-    _setup_dirs()
+    _setup_dirs(snap)
 
     logging.info("Setting default global configuration for snap.")
     munge.max_thread_count = 1
@@ -95,9 +98,9 @@ def install(_: Snap) -> None:
     slurmdbd.config_file.touch(0o644)
 
 
-@log(file=snap.paths.common / "hooks.log")
-def configure(_: Snap) -> None:
+def configure(snap: Snap) -> None:
     """Configure hook for the Slurm snap."""
+    setup_logging(snap.paths.common / "hooks.log")
     logging.info("Executing snap `configure` hook.")
     options = snap.config.get_options(
         "munge", "slurm", "slurmd", "slurmdbd", "slurmrestd"
@@ -105,20 +108,25 @@ def configure(_: Snap) -> None:
 
     if "munge" in options:
         logging.info("Updating the `munged` service's configuration.")
+        munge = Munge(snap)
         munge.update_config(options["munge"])
 
     if "slurm" in options:
         logging.info("Updating Slurm workload manager configuration.")
+        slurm = Slurm(snap)
         slurm.update_config(options["slurm"])
 
     if "slurmd" in options:
         logging.info("Updating `slurmd` service configuration.")
+        slurmd = Slurmd(snap)
         slurmd.update_config(options["slurmd"])
 
     if "slurmdbd" in options:
         logging.info("Updating `slurmdbd` service configuration.")
+        slurmdbd = Slurmdbd(snap)
         slurmdbd.update_config(options["slurmdbd"])
 
     if "slurmrestd" in options:
         logging.info("Updating `slurmrestd` service configuration.")
+        slurmrestd = Slurmrestd(snap)
         slurmrestd.update_config(options["slurmrestd"])

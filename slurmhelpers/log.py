@@ -15,31 +15,20 @@
 """Configure logging for the Slurm snap Python utility functions."""
 
 import logging
-from functools import wraps
 from os import PathLike
 from typing import Union
 
 
-def log(file: Union[str, PathLike]):
+def setup_logging(file: Union[str, PathLike]) -> None:
     """Set up logging for a Slurm snap utility function.
 
     Args:
         file: The file to record logging information.
     """
-
-    def decorator(func):
-        logging.basicConfig(
-            filename=str(file),
-            filemode="a",
-            format="%(asctime)s,%(msecs)d %(name)s %(levelname)s %(message)s",
-            datefmt="%H:%M:%S",
-            level=logging.DEBUG,
-        )
-
-        @wraps(func)
-        def wrapper(*args, **kwargs):
-            func(*args, **kwargs)
-
-        return wrapper
-
-    return decorator
+    logging.basicConfig(
+        filename=str(file),
+        filemode="a",
+        format="%(asctime)s,%(msecs)d %(name)s %(levelname)s %(message)s",
+        datefmt="%H:%M:%S",
+        level=logging.DEBUG,
+    )
