@@ -51,7 +51,7 @@ def _setup_dirs(snap: Snap) -> None:
         var / "lib" / "slurm" / "slurmrestd",
         # var/log - variable log data
         var / "log" / "slurm",
-        # var/run - variable runtime data
+        # run - variable runtime data
         run / "munge",
         run / "slurm",
     ]:
