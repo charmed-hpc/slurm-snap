@@ -24,6 +24,11 @@ website: "https://slurm.schedmd.com"
 base: core24
 confinement: classic
 compression: lzo
+platforms:
+  amd64:
+  arm64:
+  ppc64el:
+  s390x:
 environment:
   # Need this PATH declaration so that the Python-based
   # snap hooks can find the embedded Python interpreter with
