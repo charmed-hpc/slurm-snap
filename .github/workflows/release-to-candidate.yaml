@@ -1,0 +1,72 @@
+# Copyright 2024 Canonical Ltd.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+name: Release
+on:
+  # Run the workflow each time new commits are pushed to the main branch.
+  push:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  get-architectures:
+    name: 🖥 Get snap architectures
+    runs-on: ubuntu-latest
+    outputs:
+      architectures: ${{ steps.get-architectures.outputs.architectures }}
+      architectures-list: ${{ steps.get-architectures.outputs.architectures-list }}
+    steps:
+      - name: 🖥 Get snap architectures
+        id: get-architectures
+        uses: snapcrafters/ci/get-architectures@main
+
+  release:
+    name: 🚢 Release to latest/candidate
+    needs: get-architectures
+    runs-on: ubuntu-latest
+    environment: "Candidate Branch"
+    strategy:
+      matrix:
+        architecture: ${{ fromJSON(needs.get-architectures.outputs.architectures-list) }}
+    steps:
+      - name: 🚢 Release to latest/candidate
+        uses: snapcrafters/ci/release-to-candidate@main
+        with:
+          architecture: ${{ matrix.architecture }}
+          launchpad-token: ${{ secrets.LP_BUILD }}
+          store-token: ${{ secrets.SNAP_STORE_CANDIDATE }} # Expires October 30th, 2024
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+
+  call-for-testing:
+    name: 📣 Create call for testing
+    needs: [release, get-architectures]
+    environment: "Candidate Branch"
+    runs-on: ubuntu-latest
+    outputs:
+      issue-number: ${{ steps.issue.outputs.issue-number }}
+    steps:
+      - name: 📣 Create call for testing
+        id: issue
+        uses: snapcrafters/ci/call-for-testing@main
+        with:
+          architectures: ${{ needs.get-architectures.outputs.architectures }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
