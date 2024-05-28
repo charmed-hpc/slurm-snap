@@ -33,6 +33,7 @@ def _setup_dirs(snap: Snap) -> None:
     logging.info("Provisioning required directories for Slurm and munge.")
     etc = Path(snap.paths.common) / "etc"
     var = Path(snap.paths.common) / "var"
+    run = Path(snap.paths.common) / "run"
     for directory in [
         # etc - configuration files
         etc / "munge",
@@ -50,8 +51,9 @@ def _setup_dirs(snap: Snap) -> None:
         var / "lib" / "slurm" / "slurmrestd",
         # var/log - variable log data
         var / "log" / "slurm",
-        # var/run - variable runtime data
-        var / "run" / "munge",
+        # run - variable runtime data
+        run / "munge",
+        run / "slurm",
     ]:
         logging.debug("Generating directory %s.", directory)
         directory.mkdir(parents=True)

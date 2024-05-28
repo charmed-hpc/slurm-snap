@@ -1,5 +1,16 @@
-# Copyright 2023 Canonical Ltd.
-# See LICENSE file for licensing details
+# Copyright 2023-2024 Canonical Ltd.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 
 name: slurm
 version: 23.11.1
@@ -10,12 +21,9 @@ description: |
 license: Apache-2.0
 website: "https://slurm.schedmd.com"
 
-base: core22
+base: core24
 confinement: classic
 compression: lzo
-package-repositories:
-  - type: apt
-    ppa: ubuntu-hpc/rocm-smi-lib
 environment:
   # Need this PATH declaration so that the Python-based
   # snap hooks can find the embedded Python interpreter with
@@ -24,6 +32,19 @@ environment:
   PATH: $SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$SNAP/usr/local/bin:$SNAP/usr/local/sbin:$PATH
 
 apps:
+  munged:
+    command: sbin/munged.wrapper
+    daemon: simple
+
+  munge:
+    command: bin/munge --socket $SNAP_COMMON/run/munge/munged.socket.2
+  unmunge:
+    command: bin/unmunge --socket $SNAP_COMMON/run/munge/munged.socket.2
+  remunge:
+    command: bin/remunge --socket $SNAP_COMMON/run/munge/munged.socket.2
+  mungekey:
+    command: sbin/mungekey
+
   slurmctld:
     command: sbin/slurmctld.wrapper
     daemon: simple
@@ -44,6 +65,7 @@ apps:
     daemon: simple
     install-mode: disable
     after: [munged]
+
   sacct:
     command: bin/sacct
     environment:
@@ -129,27 +151,56 @@ apps:
     environment:
       SLURM_CONF: $SNAP_COMMON/etc/slurm/slurm.conf
 
-  munged:
-    command: sbin/munged.wrapper
-    daemon: simple
-  munge:
-    command: usr/bin/munge --socket $SNAP_COMMON/var/run/munge/munged.socket.2
-  unmunge:
-    command: usr/bin/unmunge --socket $SNAP_COMMON/var/run/munge/munged.socket.2
-  remunge:
-    command: usr/bin/remunge --socket $SNAP_COMMON/var/run/munge/munged.socket.2
-  mungekey:
-    command: usr/sbin/mungekey
-
 parts:
+  overlay:
+    source: overlays/
+    plugin: dump
+    organize:
+      "overlays/sbin/*": sbin/
+
+  hooks:
+    source: .
+    build-attributes: [enable-patchelf]
+    plugin: python
+    build-packages:
+      - git
+      - python3-setuptools
+    python-requirements: [requirements.txt]
+    stage-packages:
+      - libpython3.12-stdlib
+      - libpython3.12-minimal
+      - python3-venv
+      - python3.12-minimal
+    override-build: |
+      craftctl default
+      snap-helpers write-hooks
+
+  munge:
+    plugin: autotools
+    source: https://github.com/dun/munge.git
+    source-type: git
+    source-tag: munge-0.5.16
+    build-attributes: [enable-patchelf]
+    build-packages:
+      - libssl-dev
+      - zlib1g-dev
+      - libbz2-dev
+    stage-packages:
+      - libssl3t64
+      - zlib1g
+      - libbz2-1.0
+    autotools-configure-parameters:
+      - --prefix=/
+      - --with-crypto-lib=openssl
+
   slurm:
     plugin: autotools
+    after: [munge]
     # yamllint disable-line rule:line-length
     source: "https://download.schedmd.com/slurm/slurm-${SNAPCRAFT_PROJECT_VERSION}.tar.bz2"
     source-type: tar
     build-attributes: [enable-patchelf]
     build-packages:
-      - libmunge-dev
       - libncurses-dev
       - libgtk2.0-dev
       - default-libmysqlclient-dev
@@ -171,7 +222,6 @@ parts:
       - libjson-c-dev
       - libjwt-dev
       - liblz4-dev
-      - bash-completion
       - libdbus-1-dev
       - librdkafka-dev
       - librocm-smi-dev
@@ -180,12 +230,11 @@ parts:
       - libnuma-dev
       - libaec-dev
     stage-packages:
-      - munge
-      - libncurses5
+      - libncurses6
       - libgtk2.0-0
       - libmysqlclient21
       - libpam0g
-      - libperl5.34
+      - libperl5.38t64
       - liblua5.4-0
       - libhwloc15
       - librrd8
@@ -199,7 +248,7 @@ parts:
       - libhttp-parser2.9
       - libyaml-0-2
       - libjson-c5
-      - libjwt0
+      - libjwt2
       - liblz4-1
       - libdbus-1-3
       - librdkafka1
@@ -209,17 +258,15 @@ parts:
       - libnuma1
       - libaec0
       - libsz2
-      - libhdf5-hl-100
-      - libhdf5-103-1
+      - libhdf5-hl-100t64
+      - libhdf5-103-1t64
     autotools-configure-parameters:
       - --prefix=/
-      - --localstatedir=/var
-      - --runstatedir=/var/run/slurm
       - --disable-developer
       - --disable-debug
       - --enable-slurmrestd
       - --enable-multiple-slurmd
-      - --with-munge
+      - --with-munge=${CRAFT_STAGE}
       - --with-libcurl
       - --with-http-parser
       - --with-yaml
@@ -230,34 +277,3 @@ parts:
       - --with-freeipmi
       - --with-ofed
       - --with-pmix
-
-  slurm-overlay:
-    after: [slurm]
-    plugin: dump
-    source: overlays/slurm
-    organize:
-      "overlays/slurm/sbin/*": sbin/
-
-  munge-overlay:
-    after: [slurm]
-    plugin: dump
-    source: overlays/munge
-    organize:
-      "overlays/munge/sbin/*": sbin/
-
-  snap-hooks:
-    source: .
-    build-attributes: [enable-patchelf]
-    plugin: python
-    build-packages:
-      - git
-      - python3-setuptools
-    python-requirements: [requirements.txt]
-    stage-packages:
-      - libpython3.10-stdlib
-      - libpython3.10-minimal
-      - python3-venv
-      - python3.10-minimal
-    override-build: |
-      craftctl default
-      snap-helpers write-hooks

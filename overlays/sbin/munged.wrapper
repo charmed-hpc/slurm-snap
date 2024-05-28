@@ -19,8 +19,8 @@
 # Start munge authentication services.
 "${SNAP}"/usr/sbin/munged \
   --key-file "${SNAP_COMMON}/etc/munge/munge.key" \
-  --socket "${SNAP_COMMON}/var/run/munge/munged.socket.2" \
-  --pid-file "${SNAP_COMMON}/var/run/munge/munged.pid" \
+  --socket "${SNAP_COMMON}/run/munge/munged.socket.2" \
+  --pid-file "${SNAP_COMMON}/run/munge/munged.pid" \
   --seed-file "${SNAP_COMMON}/var/lib/munge/munge.seed" \
   --num-threads "${MUNGED_MAX_THREAD_COUNT}" \
   --foreground
