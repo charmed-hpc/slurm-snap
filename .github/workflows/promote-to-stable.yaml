@@ -1,0 +1,38 @@
+# Copyright 2024 Canonical Ltd.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+name: Promote
+on:
+  issue_comment:
+    types:
+      - created
+
+permissions:
+  issues: write
+
+jobs:
+  promote:
+    name: ⬆️ Promote to stable
+    environment: "Candidate Branch"
+    runs-on: ubuntu-latest
+    if: |
+      ( !github.event.issue.pull_request )
+      && contains(github.event.comment.body, '/promote ')
+      && contains(github.event.*.labels.*.name, 'testing')
+    steps:
+      - name: ⬆️ Promote to stable
+        uses: snapcrafters/ci/promote-to-stable@main
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          store-token: ${{ secrets.SNAP_STORE_STABLE }} # Expires October 30th, 2024
