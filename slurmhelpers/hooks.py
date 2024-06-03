@@ -64,7 +64,7 @@ def _setup_dirs(snap: Snap) -> None:
     (etc / "munge").chmod(0o700)
     (etc / "slurm").chmod(0o755)
     (var / "lib" / "munge").chmod(0o711)
-    (var / "run" / "munge").chmod(0o755)
+    (run / "munge").chmod(0o755)
 
 
 def install(snap: Snap) -> None:
