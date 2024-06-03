@@ -37,6 +37,11 @@ environment:
   PATH: $SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$SNAP/usr/local/bin:$SNAP/usr/local/sbin:$PATH
 
 apps:
+  logrotate:
+    command: usr/sbin/logrotate $SNAP_COMMON/etc/logrotate/logrotate.conf
+    daemon: oneshot
+    timer: 00:00  # Run `logrotate` once everyday at midnight.
+
   munged:
     command: sbin/munged.wrapper
     daemon: simple
@@ -162,6 +167,7 @@ parts:
     plugin: dump
     organize:
       "overlays/sbin/*": sbin/
+      "overlays/templates/*": templates/
 
   hooks:
     source: .
@@ -179,6 +185,14 @@ parts:
     override-build: |
       craftctl default
       snap-helpers write-hooks
+
+  logrotate:
+    plugin: nil
+    build-attributes: [enable-patchelf]
+    stage-packages:
+      - logrotate
+      - procps  # `pkill`
+      - bzip2
 
   munge:
     plugin: autotools

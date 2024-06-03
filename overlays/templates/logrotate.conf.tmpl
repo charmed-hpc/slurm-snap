@@ -1,0 +1,29 @@
+# Slurm logs (slurmctld, slurmd and slurmdbd).
+$SNAP_COMMON/var/log/slurm/*.log {
+    # Rotate daemon logs every week; keep 4 weeks worth on backlog.
+    weekly
+    rotate 4
+    size=5M
+    create 640 slurm root
+    missingok
+    nocopytruncate
+    nomail
+    notifempty
+    noolddir
+    sharedscripts
+
+    # Compress logs - they can get quite large depending on demand.
+    compress
+    delaycompress
+    compresscmd $SNAP/bin/bzip2
+    compressext .bz2
+
+    # Re-read log level and reopen log files using `SIGUSR2` signal.
+    # https://slurm.schedmd.com/slurmctld.html#SECTION_SIGNALS
+    postrotate
+        $SNAP/usr/bin/pkill -x --signal SIGUSR2 slurmctld
+        $SNAP/usr/bin/pkill -x --signal SIGUSR2 slurmd
+        $SNAP/usr/bin/pkill -x --signal SIGUSR2 slurmdbd
+        exit 0
+    endscript
+}

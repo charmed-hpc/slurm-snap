@@ -15,6 +15,7 @@
 """Hooks for the Slurm snap."""
 
 import logging
+import os
 from pathlib import Path
 
 from snaphelpers import Snap
@@ -36,6 +37,7 @@ def _setup_dirs(snap: Snap) -> None:
     run = Path(snap.paths.common) / "run"
     for directory in [
         # etc - configuration files
+        etc / "logrotate",
         etc / "munge",
         etc / "slurm",
         etc / "slurm" / "plugstack.conf.d",
@@ -67,6 +69,17 @@ def _setup_dirs(snap: Snap) -> None:
     (run / "munge").chmod(0o755)
 
 
+def _setup_logrotate(snap: Snap) -> None:
+    """Configure `logrotate` for the Slurm.
+
+    Args:
+        snap: The Snap instance.
+    """
+    tmpl = (snap.paths.snap / "templates" / "logrotate.conf.tmpl").read_text()
+    config = os.path.expandvars(tmpl)
+    (snap.paths.common / "etc" / "logrotate" / "logrotate.conf").write_text(config)
+
+
 def install(snap: Snap) -> None:
     """Install hook for the Slurm snap.
 
@@ -83,6 +96,7 @@ def install(snap: Snap) -> None:
 
     logging.info("Executing snap `install` hook.")
     _setup_dirs(snap)
+    _setup_logrotate(snap)
 
     logging.info("Setting default global configuration for snap.")
     munge.max_thread_count = 1
