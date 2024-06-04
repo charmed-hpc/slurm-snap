@@ -75,6 +75,13 @@ apps:
     daemon: simple
     install-mode: disable
     after: [munged]
+  slurm-prometheus-exporter:
+    command: bin/prometheus-slurm-exporter
+    daemon: simple
+    install-mode: disable
+    after: [munged]
+    restart-condition: always
+    restart-delay: 15s
 
   sacct:
     command: bin/sacct
@@ -296,3 +303,15 @@ parts:
       - --with-freeipmi
       - --with-ofed
       - --with-pmix
+
+  slurm-prometheus-exporter:
+    after: [slurm]
+    source: "https://github.com/rivosinc/prometheus-slurm-exporter.git"
+    source-tag: "v1.4.1"
+    plugin: go
+    build-environment:
+      - CPATH: ${CRAFT_STAGE}/include
+    build-packages:
+      - swig
+    build-snaps:
+      - go/1.22/stable
