@@ -35,6 +35,7 @@ environment:
   # the necessary dependencies packaged in `site-packages`.
   # yamllint disable-line rule:line-length
   PATH: $SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$SNAP/usr/local/bin:$SNAP/usr/local/sbin:$PATH
+  SLURM_CONF: $SNAP_COMMON/etc/slurm/slurm.conf
 
 apps:
   logrotate:
@@ -85,88 +86,46 @@ apps:
 
   sacct:
     command: bin/sacct
-    environment:
-      SLURM_CONF: $SNAP_COMMON/etc/slurm/slurm.conf
   sacctmgr:
     command: bin/sacctmgr
-    environment:
-      SLURM_CONF: $SNAP_COMMON/etc/slurm/slurm.conf
   salloc:
     command: bin/salloc
-    environment:
-      SLURM_CONF: $SNAP_COMMON/etc/slurm/slurm.conf
   sattach:
     command: bin/sattach
-    environment:
-      SLURM_CONF: $SNAP_COMMON/etc/slurm/slurm.conf
   sbatch:
     command: bin/sbatch
-    environment:
-      SLURM_CONF: $SNAP_COMMON/etc/slurm/slurm.conf
   sbcast:
     command: bin/sbcast
-    environment:
-      SLURM_CONF: $SNAP_COMMON/etc/slurm/slurm.conf
   scancel:
     command: bin/scancel
-    environment:
-      SLURM_CONF: $SNAP_COMMON/etc/slurm/slurm.conf
   scontrol:
     command: bin/scontrol
-    environment:
-      SLURM_CONF: $SNAP_COMMON/etc/slurm/slurm.conf
   scrontab:
     command: bin/scrontab
-    environment:
-      SLURM_CONF: $SNAP_COMMON/etc/slurm/slurm.conf
   scrun:
     command: bin/scrun
-    environment:
-      SLURM_CONF: $SNAP_COMMON/etc/slurm/slurm.conf
   sdiag:
     command: bin/sdiag
-    environment:
-      SLURM_CONF: $SNAP_COMMON/etc/slurm/slurm.conf
   sh5util:
     command: bin/sh5util
-    environment:
-      SLURM_CONF: $SNAP_COMMON/etc/slurm/slurm.conf
   sinfo:
     command: bin/sinfo
-    environment:
-      SLURM_CONF: $SNAP_COMMON/etc/slurm/slurm.conf
   sprio:
     command: bin/sprio
-    environment:
-      SLURM_CONF: $SNAP_COMMON/etc/slurm/slurm.conf
   squeue:
     command: bin/squeue
-    environment:
-      SLURM_CONF: $SNAP_COMMON/etc/slurm/slurm.conf
   sreport:
     command: bin/sreport
-    environment:
-      SLURM_CONF: $SNAP_COMMON/etc/slurm/slurm.conf
   srun:
     command: bin/srun
-    environment:
-      SLURM_CONF: $SNAP_COMMON/etc/slurm/slurm.conf
   sshare:
     command: bin/sshare
-    environment:
-      SLURM_CONF: $SNAP_COMMON/etc/slurm/slurm.conf
   sstat:
     command: bin/sstat
-    environment:
-      SLURM_CONF: $SNAP_COMMON/etc/slurm/slurm.conf
   strigger:
     command: bin/strigger
-    environment:
-      SLURM_CONF: $SNAP_COMMON/etc/slurm/slurm.conf
   sview:
     command: bin/sview
-    environment:
-      SLURM_CONF: $SNAP_COMMON/etc/slurm/slurm.conf
 
 parts:
   overlay:
