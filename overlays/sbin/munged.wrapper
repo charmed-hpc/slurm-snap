@@ -17,7 +17,7 @@
 . "${SNAP_COMMON}/.env"
 
 # Start munge authentication services.
-"${SNAP}"/usr/sbin/munged \
+"${SNAP}"/sbin/munged \
   --key-file "${SNAP_COMMON}/etc/munge/munge.key" \
   --socket "${SNAP_COMMON}/run/munge/munged.socket.2" \
   --pid-file "${SNAP_COMMON}/run/munge/munged.pid" \
