@@ -184,6 +184,7 @@ parts:
       - libbz2-1.0
     autotools-configure-parameters:
       - --prefix=/
+      - --with-munge-socket=/var/snap/${SNAPCRAFT_PROJECT_NAME}/common/run/munge/munged.socket.2
       - --with-crypto-lib=openssl
 
   slurm:
