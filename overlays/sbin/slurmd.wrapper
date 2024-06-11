@@ -18,7 +18,6 @@
 
 if [ -n "${SLURMD_CONFIG_SERVER}" ]; then
   "${SNAP}"/sbin/slurmd \
-    --authinfo "socket=${SNAP_COMMON}/run/munge/munged.socket.2" \
     --conf-server "${SLURMD_CONFIG_SERVER}" \
     -d "${SNAP}/sbin/slurmstepd" \
     -L "${SNAP_COMMON}/var/log/slurm/slurmd.conf" -D
