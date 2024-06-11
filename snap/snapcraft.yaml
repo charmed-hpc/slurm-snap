@@ -13,7 +13,7 @@
 # limitations under the License.
 
 name: slurm
-version: 23.11.1
+version: 23.11.7
 summary: "Slurm: A Highly Scalable Workload Manager"
 description: |
   Slurm is an open source, fault-tolerant, and highly scalable cluster
@@ -128,6 +128,14 @@ apps:
     command: bin/sview
 
 parts:
+  patch:
+    source: patches/
+    plugin: dump
+    organize:
+      "*": patches/
+    prime:
+      - -*
+
   overlay:
     source: overlays/
     plugin: dump
@@ -179,8 +187,8 @@ parts:
       - --with-crypto-lib=openssl
 
   slurm:
-    plugin: autotools
-    after: [munge]
+    plugin: nil
+    after: [munge, patch]
     # yamllint disable-line rule:line-length
     source: "https://download.schedmd.com/slurm/slurm-${SNAPCRAFT_PROJECT_VERSION}.tar.bz2"
     source-type: tar
@@ -245,23 +253,41 @@ parts:
       - libsz2
       - libhdf5-hl-100t64
       - libhdf5-103-1t64
-    autotools-configure-parameters:
-      - --prefix=/
-      - --disable-developer
-      - --disable-debug
-      - --enable-slurmrestd
-      - --enable-multiple-slurmd
-      - --with-munge=${CRAFT_STAGE}
-      - --with-libcurl
-      - --with-http-parser
-      - --with-yaml
-      - --with-json
-      - --with-jwt
-      - --with-hdf5=yes
-      - --with-rdkafka
-      - --with-freeipmi
-      - --with-ofed
-      - --with-pmix
+    override-build: |
+      craftctl default
+
+      set -e
+      # Apply patches to Slurm.
+      for patch in ${CRAFT_STAGE}/patches/slurm/*.patch; do
+        echo "Applying $(basename "$patch") ..."
+        patch \
+          --batch \
+          --forward \
+          --strip 1 \
+          --input "$patch"
+      done
+      echo "Remaking all Makefile.in for Slurm ..."
+      automake
+
+      # Compile Slurm with custom patches applied.
+      ./configure \
+        --prefix=${CRAFT_PART_INSTALL} \
+        --disable-developer \
+        --disable-debug \
+        --enable-slurmrestd \
+        --enable-multiple-slurmd \
+        --with-munge=${CRAFT_STAGE} \
+        --with-libcurl \
+        --with-http-parser \
+        --with-yaml \
+        --with-json \
+        --with-jwt \
+        --with-hdf5=yes \
+        --with-rdkafka \
+        --with-freeipmi \
+        --with-ofed \
+        --with-pmix
+      make -j${CRAFT_PARALLEL_BUILD_COUNT} && make install
 
   slurm-prometheus-exporter:
     after: [slurm]
