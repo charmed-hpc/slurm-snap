@@ -35,7 +35,6 @@ environment:
   # the necessary dependencies packaged in `site-packages`.
   # yamllint disable-line rule:line-length
   PATH: $SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$SNAP/usr/local/bin:$SNAP/usr/local/sbin:$PATH
-  SLURM_CONF: $SNAP_COMMON/etc/slurm/slurm.conf
 
 apps:
   logrotate:
