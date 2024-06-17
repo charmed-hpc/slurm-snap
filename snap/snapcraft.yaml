@@ -21,14 +21,17 @@ description: |
 license: Apache-2.0
 website: "https://slurm.schedmd.com"
 
-base: core24
+base: core22
 confinement: classic
 compression: lzo
-platforms:
-  amd64:
-  arm64:
-  ppc64el:
-  s390x:
+architectures:
+  - build-on: amd64
+  - build-on: arm64
+  - build-on: ppc64el
+  - build-on: s390x
+package-repositories:
+  - type: apt
+    ppa: ubuntu-hpc/rocm-smi-lib
 environment:
   # Need this PATH declaration so that the Python-based
   # snap hooks can find the embedded Python interpreter with
@@ -151,10 +154,10 @@ parts:
       - python3-setuptools
     python-requirements: [requirements.txt]
     stage-packages:
-      - libpython3.12-stdlib
-      - libpython3.12-minimal
+      - libpython3.10-stdlib
+      - libpython3.10-minimal
       - python3-venv
-      - python3.12-minimal
+      - python3.10-minimal
     override-build: |
       craftctl default
       snap-helpers write-hooks
@@ -178,7 +181,7 @@ parts:
       - zlib1g-dev
       - libbz2-dev
     stage-packages:
-      - libssl3t64
+      - libssl3
       - zlib1g
       - libbz2-1.0
     autotools-configure-parameters:
@@ -223,11 +226,11 @@ parts:
       - libnuma-dev
       - libaec-dev
     stage-packages:
-      - libncurses6
+      - libncurses5
       - libgtk2.0-0
       - libmysqlclient21
       - libpam0g
-      - libperl5.38t64
+      - libperl5.34
       - liblua5.4-0
       - libhwloc15
       - librrd8
@@ -241,7 +244,7 @@ parts:
       - libhttp-parser2.9
       - libyaml-0-2
       - libjson-c5
-      - libjwt2
+      - libjwt0
       - liblz4-1
       - libdbus-1-3
       - librdkafka1
@@ -251,8 +254,8 @@ parts:
       - libnuma1
       - libaec0
       - libsz2
-      - libhdf5-hl-100t64
-      - libhdf5-103-1t64
+      - libhdf5-hl-100
+      - libhdf5-103-1
     override-build: |
       craftctl default
 
