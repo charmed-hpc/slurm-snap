@@ -235,7 +235,6 @@ parts:
       - libhwloc15
       - librrd8
       - libipmimonitoring6
-      - hdf5-helpers
       - libfreeipmi17
       - hdf5-helpers
       - man2html
