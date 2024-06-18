@@ -202,7 +202,6 @@ parts:
       - default-libmysqlclient-dev
       - libpam0g-dev
       - libperl-dev
-      - libpam0g-dev
       - liblua5.4-dev
       - libhwloc-dev
       - librrd-dev
