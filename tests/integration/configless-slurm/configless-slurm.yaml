@@ -1,0 +1,170 @@
+# Copyright 2024 Canonical Ltd.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+name: "configless slurm integration test"
+provider:
+  lxd:
+acts:
+  ldap-server:
+    name: "Provision IAM integration"
+    run-on: noble
+    keep-alive: true
+    input:
+      - host-path: testdata/glauth.conf
+        path: glauth.cfg
+    scenes:
+      - name: "Install LDAP server (glauth)"
+        run: |
+          while timeout -k 370 360 snap install glauth --edge; [ $? != 0 ]
+          do sleep 1
+          done
+      - name: "Start LDAP server"
+        run: |
+          mv glauth.cfg /var/snap/glauth/common/etc/glauth/glauth.d
+          snap start glauth
+
+  nfs-server:
+    name: "Provision shared storage integration"
+    run-on: noble
+    keep-alive: true
+    input:
+      - host-path: testdata/sssd.conf
+        path: sssd.conf
+      - host-path: testdata/exports.conf
+        path: exports
+    scenes:
+      - name: "Install NFS server (nfs-kernel-server)"
+        run: |
+          export DEBIAN_FRONTEND=noninteractive
+          apt-get install -y nfs-kernel-server sssd-ldap
+      - name: "Connect to IAM provider"
+        run: |
+          mv sssd.conf /etc/sssd
+          chmod 0600 /etc/sssd/sssd.conf
+          chown root:root /etc/sssd/sssd.conf
+          systemctl restart sssd
+      - name: "Start NFS server"
+        run: |
+          mkdir -p /home/researcher
+          chown researcher:researchers /home/researcher
+          mv exports /etc
+          exportfs -a
+          systemctl restart nfs-server
+
+  controller:
+    name: "Provision workload scheduler (controller)"
+    run-on: noble
+    keep-alive: true
+    input:
+      - host-path: testdata/slurm.snap
+        path: slurm.snap
+      - host-path: testdata/slurm.conf
+        path: slurm.conf
+      - host-path: testdata/sssd.conf
+        path: sssd.conf
+    output:
+      - key: munge
+        path: /var/snap/slurm/common/etc/munge/munge.key
+    scenes:
+      - name: "Install Slurm (slurmctld + munge)"
+        run: |
+          export DEBIAN_FRONTEND=noninteractive
+          while timeout -k 370 360 snap install ./slurm.snap --dangerous --classic; [ $? != 0 ]
+          do sleep 1
+          done
+          apt-get install -y nfs-common sssd-ldap
+      - name: "Connect to IAM provider"
+        run: |
+          mv sssd.conf /etc/sssd
+          chmod 0600 /etc/sssd/sssd.conf
+          chown root:root /etc/sssd/sssd.conf
+          systemctl restart sssd
+      - name: "Mount shared storage"
+        run: |
+          mount -t nfs nfs-server:/home /home
+      - name: "Start controller service"
+        run: |
+          export CONTROLLER_HOSTNAME=$(hostname -I | xargs)
+          envsubst < slurm.conf > /var/snap/slurm/common/etc/slurm/slurm.conf
+          snap start slurm.slurmctld
+          snap restart slurm.munged
+
+  compute:
+    name: "Provision workload scheduler (compute)"
+    run-on: noble
+    keep-alive: true
+    input:
+      - host-path: testdata/slurm.snap
+        path: slurm.snap
+      - key: munge
+        path: munge.key
+      - host-path: testdata/sssd.conf
+        path: sssd.conf
+    scenes:
+      - name: "Install Slurm (slurmd + munge)"
+        run: |
+          export DEBIAN_FRONTEND=noninteractive
+          while timeout -k 370 360 snap install ./slurm.snap --dangerous --classic; [ $? != 0 ]
+          do sleep 1
+          done
+          apt-get install -y nfs-common sssd-ldap
+      - name: "Connect to IAM provider"
+        run: |
+          mv sssd.conf /etc/sssd
+          chmod 0600 /etc/sssd/sssd.conf
+          chown root:root /etc/sssd/sssd.conf
+          systemctl restart sssd
+      - name: "Mount shared storage"
+        run: |
+          mount -t nfs nfs-server:/home /home
+      - name: "Start compute service"
+        run: |
+          mv munge.key /var/snap/slurm/common/etc/munge/munge.key
+          snap set slurm slurmd.config-server=controller:6817
+          snap restart slurm.munged
+          snap start slurm.slurmd
+
+  run-sim:
+    name: "Run example workload"
+    run-on: controller
+    keep-alive: true
+    scenes:
+      - name: "Submit job to cluster"
+        run: |
+          sudo -u researcher \
+            slurm.srun -N 1 -p all echo hello world
+
+  cleanup-compute:
+    name: "Cleanup compute node"
+    run-on: compute
+    scenes:
+      - name: "Unmount /home"
+        run: |
+          umount /home
+
+  cleanup-controller:
+    name: "Cleanup controller node"
+    run-on: controller
+    scenes:
+      - name: "Unmount /home"
+        run: |
+          umount /home
+
+  cleanup-nfs-server:
+    name: "Cleanup nfs-server node"
+    run-on: nfs-server
+    scenes:
+      - name: "Stop NFS server"
+        run: |
+          systemctl stop nfs-server
