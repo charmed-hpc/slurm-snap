@@ -57,6 +57,8 @@ apps:
     command: bin/remunge --socket $SNAP_COMMON/run/munge/munged.socket.2
   mungekey:
     command: sbin/mungekey
+  mungectl:
+    command: bin/mungectl
 
   slurmctld:
     command: sbin/slurmctld.wrapper
@@ -188,6 +190,12 @@ parts:
       - --prefix=/
       - --with-munge-socket=/var/snap/${SNAPCRAFT_PROJECT_NAME}/common/run/munge/munged.socket.2
       - --with-crypto-lib=openssl
+
+  mungectl:
+    source: src/mungectl
+    plugin: go
+    build-snaps:
+      - go/1.22/stable
 
   slurm:
     plugin: nil
