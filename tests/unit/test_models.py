@@ -15,7 +15,16 @@
 
 """Test models that wrap the configuration for the bundled daemons."""
 
+import subprocess
+
 import pytest
+from slurmhelpers.models import (
+    _process_down_nodes,
+    _process_frontend_nodes,
+    _process_node_sets,
+    _process_nodes,
+    _process_partitions,
+)
 from slurmutils.models import (
     DownNodes,
     DownNodesList,
@@ -29,14 +38,6 @@ from slurmutils.models import (
     PartitionMap,
     SlurmConfig,
     SlurmdbdConfig,
-)
-
-from slurmhelpers.models import (
-    _process_down_nodes,
-    _process_frontend_nodes,
-    _process_node_sets,
-    _process_nodes,
-    _process_partitions,
 )
 
 
@@ -114,15 +115,16 @@ class TestMungeModel:
     def test_generate_key(self, mocker, munge) -> None:
         """Test `generate_key` method."""
         # Generate key when `munge.key` file does not yet exist.
-        mocker.patch("pathlib.Path.exists", return_value=False)
-        mocker.patch("pathlib.Path.touch")
-        mocker.patch("pathlib.Path.write_bytes")
+        mocker.patch("subprocess.check_output")
         munge.generate_key()
 
-        # Generate key when `munge.key` file exists.
-        mocker.patch("pathlib.Path.exists", return_value=True)
-        mocker.patch("pathlib.Path.write_bytes")
-        munge.generate_key()
+        # Fail to generate new `munge.key`.
+        mocker.patch(
+            "subprocess.check_output",
+            side_effect=subprocess.CalledProcessError(0, ["mungectl", "generate"]),
+        )
+        with pytest.raises(subprocess.CalledProcessError):
+            munge.generate_key()
 
     def test_update_config(self, mocker, munge) -> None:
         """Test `update_config` method."""

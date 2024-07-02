@@ -16,7 +16,7 @@
 
 import base64
 import logging
-import os
+import subprocess
 from abc import ABC, abstractmethod
 from typing import Any, Dict, List, Optional
 
@@ -165,10 +165,12 @@ class Munge(_BaseModel):
         Replicates the daemon autostart feature from the  munge Debian package.
         """
         logging.info("Generating new secret file for service `munged`.")
-        if not self.secret_file.exists():
-            self.secret_file.touch(0o600)
+        try:
+            subprocess.check_output(["mungectl", "generate"])
+        except subprocess.CalledProcessError:
+            logging.fatal("Failed to generate a new munge key")
+            raise
 
-        self.secret_file.write_bytes(os.urandom(1024))
         self._needs_restart(["munged"])
 
     def update_config(self, config: Dict[str, str]) -> None:

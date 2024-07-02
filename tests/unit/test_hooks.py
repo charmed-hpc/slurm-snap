@@ -80,6 +80,7 @@ class TestHooks:
 
     def test_install_hook(self, mocker, snap) -> None:
         """Test `install` hook."""
+        mocker.patch("subprocess.check_output")
         mocker.patch("pathlib.Path.chmod")
         mocker.patch("pathlib.Path.mkdir")
         mocker.patch("pathlib.Path.touch")

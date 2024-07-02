@@ -18,10 +18,9 @@
 from unittest.mock import MagicMock, PropertyMock
 
 import pytest
+from slurmhelpers.models import Munge, Slurm, Slurmd, Slurmdbd, Slurmrestd
 from snaphelpers import Snap, SnapConfig, SnapConfigOptions, SnapServices
 from snaphelpers._ctl import ServiceInfo
-
-from slurmhelpers.models import Munge, Slurm, Slurmd, Slurmdbd, Slurmrestd
 
 
 @pytest.fixture
