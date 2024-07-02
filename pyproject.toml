@@ -17,6 +17,7 @@ name = "slurm-helpers"
 version = "0.1.0"
 
 [tool.setuptools.packages.find]
+where = ["src"]
 include = ["slurmhelpers"]
 
 # Hook configuration for snaphelpers utility.
