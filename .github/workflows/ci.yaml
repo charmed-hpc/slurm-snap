@@ -36,7 +36,9 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
       - name: Install dependencies
-        run: python3 -m pip install tox
+        run: |
+          sudo snap install golangci-lint --classic
+          python3 -m pip install tox
       - name: Run linters
         run: make lint
 
