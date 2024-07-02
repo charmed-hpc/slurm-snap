@@ -38,7 +38,7 @@ jobs:
       - name: Install dependencies
         run: python3 -m pip install tox
       - name: Run linters
-        run: tox run -e lint
+        run: make lint
 
   unit-test:
     name: Unit tests
@@ -49,7 +49,7 @@ jobs:
       - name: Install dependencies
         run: python3 -m pip install tox
       - name: Run tests
-        run: tox run -e unit
+        run: make unit
 
   integration-test:
     name: Integration tests

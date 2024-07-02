@@ -17,20 +17,46 @@ FORMAT_YELLOW = \033[0;33m
 FORMAT_BLUE = \033[0;34m
 FORMAT_END = \033[0m
 
-##@ Build
-
-.PHONY: snap
-snap: ## Build Slurm snap package
-	@snapcraft -v pack
-
-##@ Test
-
+MUNGECTL := $(CURDIR)/src/mungectl
 define INTEGRATION_TESTS
 	integration-configless
 endef
 
+define mungectl
+	@make -f $(MUNGECTL)/Makefile -C $(MUNGECTL) $(1)
+endef
+
+define slurmhelpers
+	@tox run -e $(1)
+endef
+
+##@ Build
+
+.PHONY: snap
+snap: ## Build snap package
+	snapcraft -v pack
+
+##@ Lint
+
+.PHONY: fmt
+fmt: ## Format snap code
+	@$(call mungectl, "fmt")
+	@$(call slurmhelpers, "fmt")
+
+.PHONY:
+lint: ## Lint snap code
+	@$(call mungectl, "lint")
+	@$(call slurmhelpers, "lint")
+
+##@ Test
+
+.PHONY: unit
+unit: ## Run snap unit tests
+	@$(call mungectl, "unit")
+	@$(call slurmhelpers, "unit")
+
 .PHONY: integration
-integration: $(INTEGRATION_TESTS) ## Run Slurm integration tests with gambol
+integration: $(INTEGRATION_TESTS) ## Run snap integration tests with gambol
 
 .PHONY: check-snap-exists
 check-snap-exists:
