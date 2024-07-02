@@ -75,7 +75,7 @@ acts:
         path: sssd.conf
     output:
       - key: munge
-        path: /var/snap/slurm/common/etc/munge/munge.key
+        path: key.out
     scenes:
       - name: "Install Slurm (slurmctld + munge)"
         run: |
@@ -99,6 +99,7 @@ acts:
           envsubst < slurm.conf > /var/snap/slurm/common/etc/slurm/slurm.conf
           snap start slurm.slurmctld
           snap restart slurm.munged
+          slurm.mungectl get | tee key.out
 
   compute:
     name: "Provision workload scheduler (compute)"
@@ -108,7 +109,7 @@ acts:
       - host-path: testdata/slurm.snap
         path: slurm.snap
       - key: munge
-        path: munge.key
+        path: key.out
       - host-path: testdata/sssd.conf
         path: sssd.conf
     scenes:
@@ -130,7 +131,7 @@ acts:
           mount -t nfs nfs-server:/home /home
       - name: "Start compute service"
         run: |
-          mv munge.key /var/snap/slurm/common/etc/munge/munge.key
+          cat key.out | slurm.mungectl set
           snap set slurm slurmd.config-server=controller:6817
           snap restart slurm.munged
           snap start slurm.slurmd
