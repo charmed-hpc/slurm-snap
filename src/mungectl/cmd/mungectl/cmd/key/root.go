@@ -13,39 +13,20 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package cmd
+package key
 
 import (
-	"fmt"
-	"os"
-	"path"
-
 	"github.com/spf13/cobra"
-
-	key "mungectl/internal/key"
 )
 
-const getHelp = "get current munge key"
-const getExample = `
-mungectl get > key.out
+const keyHelp = "Manage munge key file"
 
-	Get current munge key, encode into a base64 string, and write to key.out.
-`
-
-var getCmd = &cobra.Command{
-	Use:     "get",
-	Short:   getHelp,
-	Example: getExample,
-	Run:     getExecute,
+var KeyCmd = &cobra.Command{
+	Use:   "key",
+	Short: keyHelp,
 }
 
-func getExecute(cmd *cobra.Command, args []string) {
-	file := path.Join(os.Getenv("SNAP_COMMON"), "etc", "munge", "munge.key")
-	content, err := key.Read(file)
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "failed to read current munge key file %s\n", file)
-		os.Exit(1)
-	}
-
-	fmt.Fprintln(os.Stdout, key.Encode(content))
+func init() {
+	KeyCmd.CompletionOptions.DisableDefaultCmd = true
+	KeyCmd.AddCommand(generateCmd, getCmd, setCmd)
 }

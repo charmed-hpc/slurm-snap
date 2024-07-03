@@ -13,32 +13,39 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package cmd
+package key
 
 import (
 	"fmt"
 	"os"
+	"path"
 
 	"github.com/spf13/cobra"
 
-	key "mungectl/cmd/mungectl/cmd/key"
+	key "mungectl/internal/key"
 )
 
-const help = "Control the munge authentication daemon"
+const generateHelp = "Generate a new munge key"
+const generateExample = `mungectl generate
+	Generate a new munge key and write to key file location
+`
 
-var rootCmd = &cobra.Command{
-	Use:   "mungectl",
-	Short: help,
+var generateCmd = &cobra.Command{
+	Use:     "generate",
+	Short:   generateHelp,
+	Example: generateExample,
+	Run:     generateExecute,
 }
 
-func init() {
-	rootCmd.CompletionOptions.DisableDefaultCmd = true
-	rootCmd.AddCommand(key.KeyCmd)
-}
-
-func Execute() {
-	if err := rootCmd.Execute(); err != nil {
-		fmt.Fprintln(os.Stderr, err.Error())
+func generateExecute(cmd *cobra.Command, args []string) {
+	content, err := key.Generate()
+	if err != nil {
+		fmt.Fprintln(os.Stderr, "failed to generate new munge key")
 		os.Exit(1)
+	}
+
+	file := path.Join(os.Getenv("SNAP_COMMON"), "etc", "munge", "munge.key")
+	if err := key.Write(file, content); err != nil {
+		fmt.Fprintf(os.Stderr, "failed to write generated munge key file %s\n", file)
 	}
 }
