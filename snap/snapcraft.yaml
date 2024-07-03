@@ -81,7 +81,8 @@ apps:
     install-mode: disable
     after: [munged]
   slurm-prometheus-exporter:
-    command: bin/prometheus-slurm-exporter -slurm.cli-fallback
+    # yamllint disable-line rule:line-length
+    command: bin/prometheus-slurm-exporter -slurm.cli-fallback -slurm.collect-diags
     daemon: simple
     install-mode: disable
     after: [munged]
