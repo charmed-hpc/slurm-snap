@@ -166,7 +166,7 @@ class Munge(_BaseModel):
         """
         logging.info("Generating new secret file for service `munged`.")
         try:
-            subprocess.check_output(["mungectl", "generate"])
+            subprocess.check_output(["mungectl", "key", "generate"])
         except subprocess.CalledProcessError:
             logging.fatal("Failed to generate a new munge key")
             raise
