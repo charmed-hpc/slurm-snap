@@ -13,7 +13,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package cmd
+package key
 
 import (
 	"fmt"
@@ -25,27 +25,27 @@ import (
 	key "mungectl/internal/key"
 )
 
-const generateHelp = "generate a new munge key"
-const generateExample = `mungectl generate
-	Generate a new munge key and write to key file location
+const getHelp = "Get the current munge key"
+const getExample = `
+mungectl key get > key.out
+
+	Get current munge key, encode into a base64 string, and write to key.out.
 `
 
-var generateCmd = &cobra.Command{
-	Use:     "generate",
-	Short:   generateHelp,
-	Example: generateExample,
-	Run:     generateExecute,
+var getCmd = &cobra.Command{
+	Use:     "get",
+	Short:   getHelp,
+	Example: getExample,
+	Run:     getExecute,
 }
 
-func generateExecute(cmd *cobra.Command, args []string) {
-	content, err := key.Generate()
+func getExecute(cmd *cobra.Command, args []string) {
+	file := path.Join(os.Getenv("SNAP_COMMON"), "etc", "munge", "munge.key")
+	content, err := key.Read(file)
 	if err != nil {
-		fmt.Fprintln(os.Stderr, "failed to generate new munge key")
+		fmt.Fprintf(os.Stderr, "failed to read current munge key file %s\n", file)
 		os.Exit(1)
 	}
 
-	file := path.Join(os.Getenv("SNAP_COMMON"), "etc", "munge", "munge.key")
-	if err := key.Write(file, content); err != nil {
-		fmt.Fprintf(os.Stderr, "failed to write generated munge key file %s\n", file)
-	}
+	fmt.Fprintln(os.Stdout, key.Encode(content))
 }

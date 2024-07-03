@@ -13,7 +13,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package cmd
+package key
 
 import (
 	"fmt"
@@ -25,9 +25,9 @@ import (
 	key "mungectl/internal/key"
 )
 
-const setHelp = "set a new munge key"
+const setHelp = "Set a new munge key"
 const setExample = `
-mungectl set < secret.key
+mungectl key set < secret.key
 
 	Replace old munge key with one read from stdin
 `
