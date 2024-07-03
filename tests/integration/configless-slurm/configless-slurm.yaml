@@ -99,7 +99,7 @@ acts:
           envsubst < slurm.conf > /var/snap/slurm/common/etc/slurm/slurm.conf
           snap start slurm.slurmctld
           snap restart slurm.munged
-          slurm.mungectl get | tee key.out
+          slurm.mungectl key get | tee key.out
 
   compute:
     name: "Provision workload scheduler (compute)"
@@ -131,7 +131,7 @@ acts:
           mount -t nfs nfs-server:/home /home
       - name: "Start compute service"
         run: |
-          cat key.out | slurm.mungectl set
+          cat key.out | slurm.mungectl key set
           snap set slurm slurmd.config-server=controller:6817
           snap restart slurm.munged
           snap start slurm.slurmd
