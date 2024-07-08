@@ -69,10 +69,7 @@ jobs:
           channel: 5.21/stable
       - name: Set up gambol
         run: |
-          wget https://github.com/NucciTheBoss/gambol/releases/download/v0.1.0-rc2/gambol_0.1.0_amd64-rc2.snap
-          sudo snap install ./gambol_*.snap --dangerous
-          sudo snap connect gambol:lxd lxd:lxd
-          sudo snap connect gambol:dot-gambol
+          sudo snap install gambol
       - name: Build the Slurm snap
         run: |
           sudo snap install snapcraft --classic
