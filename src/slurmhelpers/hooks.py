@@ -89,9 +89,7 @@ def install(snap: Snap) -> None:
     """
     setup_logging(snap.paths.common / "hooks.log")
     munge = Munge(snap)
-    slurm = Slurm(snap)
     slurmd = Slurmd(snap)
-    slurmdbd = Slurmdbd(snap)
     slurmrestd = Slurmrestd(snap)
 
     logging.info("Executing snap `install` hook.")
@@ -106,12 +104,6 @@ def install(snap: Snap) -> None:
 
     logging.info("Generating default munge.key secret.")
     munge.generate_key()
-
-    logging.info("Creating empty `slurm.conf` file.")
-    slurm.config_file.touch(0o644)
-
-    logging.info("Creating empty `slurmdbd.conf` file.")
-    slurmdbd.config_file.touch(0o644)
 
 
 def configure(snap: Snap) -> None:
