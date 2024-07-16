@@ -24,6 +24,11 @@ from snaphelpers._ctl import ServiceInfo
 
 
 @pytest.fixture
+def fake_fs(fs):
+    """Mock filesystem for configuration hook unit tests."""
+    yield fs
+
+@pytest.fixture
 def env():
     """Mock the snap runtime environment."""
     yield {

@@ -143,7 +143,7 @@ class TestMungeModel:
 class TestSlurmModel:
     """Test the `Slurm` data model."""
 
-    def test_update_config(self, mocker, slurm) -> None:
+    def test_update_config(self, mocker, fake_fs, slurm) -> None:
         """Test `update_config` method."""
         nodes = NodeMap()
         frontend_nodes = FrontendNodeMap()
@@ -160,9 +160,11 @@ class TestSlurmModel:
         config.node_sets = node_sets
         config.partitions = partitions
 
+        # Create fake file for slurm configuration editor.
+        fake_fs.create_file("/var/snap/slurm/common/etc/slurm/slurm.conf")
+
         # Test when there has been no change to slurm configuration.
         mocker.patch("slurmutils.editors.slurmconfig.load", return_value=config)
-        mocker.patch("slurmutils.editors.slurmconfig.dump")
         mocker.patch("slurmhelpers.models._process_nodes", return_value=nodes)
         mocker.patch("slurmhelpers.models._process_frontend_nodes", return_value=frontend_nodes)
         mocker.patch("slurmhelpers.models._process_down_nodes", return_value=down_nodes)
@@ -183,7 +185,6 @@ class TestSlurmModel:
 
         # Test when there has been a change made to the slurm configuration.
         mocker.patch("slurmutils.editors.slurmconfig.load", return_value=config)
-        mocker.patch("slurmutils.editors.slurmconfig.dump")
         mocker.patch("slurmhelpers.models._process_nodes", return_value=nodes)
         mocker.patch("slurmhelpers.models._process_frontend_nodes", return_value=frontend_nodes)
         mocker.patch("slurmhelpers.models._process_down_nodes", return_value=down_nodes)
@@ -204,7 +205,6 @@ class TestSlurmModel:
 
         # Test when a bad slurmdbd configuration option has been provided.
         mocker.patch("slurmutils.editors.slurmconfig.load", return_value=config)
-        mocker.patch("slurmutils.editors.slurmconfig.dump")
         mocker.patch("slurmhelpers.models._process_nodes", return_value=nodes)
         mocker.patch("slurmhelpers.models._process_frontend_nodes", return_value=frontend_nodes)
         mocker.patch("slurmhelpers.models._process_down_nodes", return_value=down_nodes)
@@ -407,12 +407,15 @@ class TestSlurmdModel:
 class TestSlurmdbdModel:
     """Test the `Slurmdbd` data model."""
 
-    def test_update_config(self, mocker, slurmdbd) -> None:
+    def test_update_config(self, mocker, fake_fs, slurmdbd) -> None:
         """Test `update_config` method."""
         config = SlurmdbdConfig()
         config.log_file = "/var/log/slurm/slurmdbd.log"
         config.private_data = ["accounts", "events", "jobs"]
         config.track_slurmctld_down = "no"
+
+        # Create fake file for slurmdbd configuration editor.
+        fake_fs.create_file("/var/snap/slurm/common/etc/slurm/slurmdbd.conf")
 
         # Test when there has been no change to slurmdbd configuration.
         mocker.patch("slurmutils.editors.slurmdbdconfig.load", return_value=config)
@@ -427,7 +430,6 @@ class TestSlurmdbdModel:
 
         # Test when there has been a change to the slurmdbd configuration.
         mocker.patch("slurmutils.editors.slurmdbdconfig.load", return_value=config)
-        mocker.patch("slurmutils.editors.slurmdbdconfig.dump")
         slurmdbd.update_config(
             {
                 "log-file": "/var/log/slurm/slurmdbd.log",
@@ -438,7 +440,6 @@ class TestSlurmdbdModel:
 
         # Test when a bad slurmdbd configuration option has been provided.
         mocker.patch("slurmutils.editors.slurmdbdconfig.load", return_value=config)
-        mocker.patch("slurmutils.editors.slurmdbdconfig.dump")
         with pytest.raises(AttributeError):
             slurmdbd.update_config(
                 {
