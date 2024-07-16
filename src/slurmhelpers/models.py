@@ -228,26 +228,27 @@ class Slurmdbd(_BaseModel):
 
     def update_config(self, config: Dict[str, str]) -> None:
         """Update configuration for the `slurmdbd` service."""
-        # Load current `slurmdbd.conf` configuration file.
-        # Preserve old configuration so that we can determine
-        # if substantial changes were made to the `slurmdbd.conf` file.
-        sconf = slurmdbdconfig.load(self.config_file)
-        old = sconf.dict()
+        with slurmdbdconfig.edit(self.config_file) as sconf:
+            # Preserve old configuration so that we can determine
+            # if substantial changes were made to the `slurmdbd.conf` file.
+            old = sconf.dict()
 
-        # Assemble new `slurmdbd.conf` file.
-        for k, v in config.items():
-            key = k.replace("-", "_")
-            if not hasattr(sconf, key):
-                raise AttributeError(f"`slurmdbd` config file does not support option {key}.")
+            # Assemble new `slurmdbd.conf` file.
+            for k, v in config.items():
+                key = k.replace("-", "_")
+                if not hasattr(sconf, key):
+                    raise AttributeError(f"`slurmdbd` config file does not support option {key}.")
 
-            setattr(sconf, key, _apply_callback(key, v, model=sconf))
+                setattr(sconf, key, _apply_callback(key, v, model=sconf))
 
-        if sconf.dict() == old:
-            logging.debug("No change in `slurmdbd` service configuration. Not updating.")
-            return
+            if sconf.dict() == old:
+                logging.debug("No change in `slurmdbd` service configuration. Not updating.")
+                return
 
-        slurmdbdconfig.dump(sconf, self.config_file)
-        self._needs_restart(["slurmdbd"])
+            logging.info("Updating `slurmdbd` configuration file %s.", self.config_file)
+            self._needs_restart(["slurmdbd"])
+
+        self.config_file.chmod(0o600)
 
 
 class Slurmrestd(_BaseModel):
@@ -402,41 +403,42 @@ class Slurm(_BaseModel):
 
     def update_config(self, config: Dict[str, Any]) -> None:
         """Update configuration of the Slurm workload manager."""
-        # Load current `slurm.conf` configuration file.
-        # Preserve old configuration so that we can determine
-        # if substantial changes were made to the `slurm.conf` file.
-        sconf = slurmconfig.load(self.config_file)
-        old = sconf.dict()
+        with slurmconfig.edit(self.config_file) as sconf:
+            # Preserve old configuration so that we can determine
+            # if substantial changes were made to the `slurm.conf` file.
+            old = sconf.dict()
+            # Assemble new `slurm.conf` file.
+            for k, v in config.items():
+                match key := k.replace("-", "_"):
+                    case "include":
+                        # Multiline configuration options. Requires special handling.
+                        sconf.include = v.split(",")
+                    case "slurmctld_host":
+                        # Multiline configuration options. Requires special handling.
+                        sconf.slurmctld_host = v.split(",")
+                    case "nodes":
+                        sconf.nodes = _process_nodes(v)
+                    case "frontend_nodes":
+                        sconf.frontend_nodes = _process_frontend_nodes(v)
+                    case "down_nodes":
+                        sconf.down_nodes = _process_down_nodes(v)
+                    case "node_sets":
+                        sconf.node_sets = _process_node_sets(v)
+                    case "partitions":
+                        sconf.partitions = _process_partitions(v)
+                    case _:
+                        if not hasattr(sconf, key):
+                            raise AttributeError(
+                                f"Slurm config file does not support option {key}."
+                            )
 
-        # Assemble new `slurm.conf` file.
-        for k, v in config.items():
-            match key := k.replace("-", "_"):
-                case "include":
-                    # Multiline configuration options. Requires special handling.
-                    sconf.include = v.split(",")
-                case "slurmctld_host":
-                    # Multiline configuration options. Requires special handling.
-                    sconf.slurmctld_host = v.split(",")
-                case "nodes":
-                    sconf.nodes = _process_nodes(v)
-                case "frontend_nodes":
-                    sconf.frontend_nodes = _process_frontend_nodes(v)
-                case "down_nodes":
-                    sconf.down_nodes = _process_down_nodes(v)
-                case "node_sets":
-                    sconf.node_sets = _process_node_sets(v)
-                case "partitions":
-                    sconf.partitions = _process_partitions(v)
-                case _:
-                    if not hasattr(sconf, key):
-                        raise AttributeError(f"Slurm config file does not support option {key}.")
+                        setattr(sconf, key, _apply_callback(key, v, model=sconf))
 
-                    setattr(sconf, key, _apply_callback(key, v, model=sconf))
+            if sconf.dict() == old:
+                logging.debug("No change in Slurm workload manager configuration. Not updating.")
+                return
 
-        if sconf.dict() == old:
-            logging.debug("No change in Slurm workload manager configuration. Not updating.")
-            return
+            logging.info("Updating Slurm configuration file %s.", self.config_file)
+            self._needs_restart(["slurmctld", "slurmd", "slurmdbd", "slurmrestd"])
 
-        logging.info("Updating Slurm workload manager configuration file %s.", self.config_file)
-        slurmconfig.dump(sconf, self.config_file)
-        self._needs_restart(["slurmctld", "slurmd", "slurmdbd", "slurmrestd"])
+        self.config_file.chmod(0o600)
