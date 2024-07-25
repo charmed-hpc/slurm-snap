@@ -40,7 +40,7 @@ environment:
   PATH: $SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$SNAP/usr/local/bin:$SNAP/usr/local/sbin:$PATH
 
 system-usernames:
-  _daemon_: shared
+  snap_daemon: shared
 
 apps:
   logrotate:

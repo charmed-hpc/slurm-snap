@@ -25,8 +25,8 @@ fi
 # Export invalid Slurm JWT token to activate JWT authentication in slurmrestd.
 # See for more details: https://slurm.schedmd.com/rest.html#jwt
 export SLURM_JWT=
-# Drop to _daemon_ because slurmrestd cannot run as either root or SlurmUser.
-"${SNAP}"/usr/bin/setpriv --clear-groups --reuid _daemon_ --regid _daemon_ -- \
+# Drop to snap_daemon because slurmrestd cannot run as either root or SlurmUser.
+"${SNAP}"/usr/bin/setpriv --clear-groups --reuid snap_daemon --regid snap_daemon -- \
   "${SNAP}"/sbin/slurmrestd \
     -f "${SNAP_COMMON}/etc/slurm/slurm.conf" \
     --max-connections "${SLURMRESTD_MAX_CONNECTIONS}" \
