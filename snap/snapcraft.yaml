@@ -39,6 +39,9 @@ environment:
   # yamllint disable-line rule:line-length
   PATH: $SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$SNAP/usr/local/bin:$SNAP/usr/local/sbin:$PATH
 
+system-usernames:
+  _daemon_: shared
+
 apps:
   logrotate:
     command: usr/sbin/logrotate $SNAP_COMMON/etc/logrotate/logrotate.conf
@@ -263,6 +266,7 @@ parts:
       - libsz2
       - libhdf5-hl-100
       - libhdf5-103-1
+      - util-linux  # `setpriv`
     override-build: |
       craftctl default
 
