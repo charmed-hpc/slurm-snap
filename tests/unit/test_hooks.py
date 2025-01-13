@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# Copyright 2024 Canonical Ltd.
+# Copyright 2024-2025 Canonical Ltd.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -103,10 +103,8 @@ class TestHooks:
 
     def test_configure_hook(self, mocker, snap) -> None:
         """Test `configure` hook."""
-        mocker.patch("slurmhelpers.models.Munge.update_config")
-        mocker.patch("slurmhelpers.models.Slurm.update_config")
+        mocker.patch("slurmhelpers.models.Munged.update_config")
         mocker.patch("slurmhelpers.models.Slurmd.update_config")
-        mocker.patch("slurmhelpers.models.Slurmdbd.update_config")
         mocker.patch("slurmhelpers.models.Slurmrestd.update_config")
         hooks.configure(snap)
 
