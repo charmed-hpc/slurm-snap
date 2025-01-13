@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# Copyright 2024 Canonical Ltd.
+# Copyright 2024-2025 Canonical Ltd.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -18,9 +18,10 @@
 from unittest.mock import MagicMock, PropertyMock
 
 import pytest
-from slurmhelpers.models import Munge, Slurm, Slurmd, Slurmdbd, Slurmrestd
 from snaphelpers import Snap, SnapConfig, SnapConfigOptions, SnapServices
 from snaphelpers._ctl import ServiceInfo
+
+from slurmhelpers.models import Munged, Slurmd, Slurmrestd
 
 
 @pytest.fixture
@@ -52,10 +53,8 @@ def snap(env):
     snap = Snap(environ=env)
     config_options = MagicMock(SnapConfigOptions)
     config_options.as_dict.return_value = {
-        "munge": {},
-        "slurm": {},
+        "munged": {},
         "slurmd": {},
-        "slurmdbd": {},
         "slurmrestd": {},
     }
     config = MagicMock(SnapConfig)
@@ -83,30 +82,19 @@ def base_model(snap):
     # Use the `Slurm` data model since `_BaseModel` is an abstract class.
     # `_BaseModel` cannot be directly instantiated since `update_config`
     # is an abstract method.
-    yield Slurm(snap)
+    yield Slurmd(snap)
 
 
 @pytest.fixture
-def munge(snap):
+def munged(snap):
     """Create a mock `Munge` object."""
-    yield Munge(snap)
-
-
-@pytest.fixture
-def slurm(snap):
-    """Create a mock `Slurm` object."""
-    yield Slurm(snap)
+    yield Munged(snap)
 
 
 @pytest.fixture
 def slurmd(snap):
     """Create a mock `Slurmd` object."""
     yield Slurmd(snap)
-
-
-@pytest.fixture
-def slurmdbd(snap):
-    yield Slurmdbd(snap)
 
 
 @pytest.fixture

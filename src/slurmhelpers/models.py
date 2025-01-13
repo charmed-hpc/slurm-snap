@@ -1,4 +1,4 @@
-# Copyright 2024 Canonical Ltd.
+# Copyright 2024-2025 Canonical Ltd.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,44 +14,13 @@
 
 """Models for managing lifecycle operations inside the Slurm snap."""
 
-import base64
 import logging
 import subprocess
 from abc import ABC, abstractmethod
-from typing import Any, Dict, List, Optional
+from typing import Dict, List, Optional
 
 import dotenv
-from slurmutils.editors import slurmconfig, slurmdbdconfig
-from slurmutils.models import (
-    DownNodes,
-    DownNodesList,
-    FrontendNode,
-    FrontendNodeMap,
-    Node,
-    NodeMap,
-    NodeSet,
-    NodeSetMap,
-    Partition,
-    PartitionMap,
-)
 from snaphelpers import Snap
-
-
-def _apply_callback(key, value, model) -> Any:
-    """Apply callback to Slurm configuration value.
-
-    This function will return the value unmodified if the passed Slurm
-    configuration key does not have a callback or there is no parsing callback.
-
-    Args:
-        key: Slurm configuration key. Used to look up callback for value.
-        value: Value to apply callback to.
-        model: Configuration model with `callbacks` map.
-    """
-    if key in model.callbacks and (callback := model.callbacks[key].parse) is not None:
-        value = callback(value)
-
-    return value
 
 
 class _BaseModel(ABC):
@@ -81,7 +50,7 @@ class _BaseModel(ABC):
             key: Configuration to update/set.
             value: Value to set for configuration.
         """
-        logging.info("Setting %s to %s.", key, value if value != "" else "''")
+        logging.info("setting %s to %s", key, value if value != "" else "''")
         dotenv.set_key(self._env_file, key, value)
 
     @abstractmethod
@@ -105,40 +74,16 @@ class _BaseModel(ABC):
         for service in services:
             if self._snap.services.list()[service].active:
                 logging.info(
-                    "Service `%s` must be restarted to apply latest configuration changes.",
+                    "service `%s` must be restarted to apply latest configuration changes",
                     service,
                 )
 
 
-class Munge(_BaseModel):
+class Munged(_BaseModel):
     """Manage lifecycle operations for the munge daemon."""
 
     def __init__(self, *args) -> None:
         super().__init__(*args)
-        self.secret_file = self._snap.paths.common / "etc" / "munge" / "munge.key"
-
-    @property
-    def key(self) -> Optional[str]:
-        """Get current munge.key secret. DO NOT EXPOSE THIS PUBLICLY."""
-        if not self.secret_file.exists():
-            return
-
-        return base64.b64encode(self.secret_file.read_bytes()).decode()
-
-    @key.setter
-    def key(self, v: str) -> None:
-        """Set new munge.key file secret."""
-        if self.key == v:
-            logging.debug("No change for `munge.key` secret file. Not updating.")
-            return
-
-        if not self.secret_file.exists():
-            logging.debug("Creating empty `munge.key` secret file.")
-            self.secret_file.touch(0o600)
-
-        logging.info("Updating `munge.key` secret file to new key.")
-        self.secret_file.write_bytes(base64.b64decode(v.encode()))
-        self._needs_restart(["munged"])
 
     @property
     def max_thread_count(self) -> Optional[int]:
@@ -164,11 +109,18 @@ class Munge(_BaseModel):
 
         Replicates the daemon autostart feature from the  munge Debian package.
         """
-        logging.info("Generating new secret file for service `munged`.")
+        logging.info("generating new secret key file for service `munged`")
         try:
-            subprocess.check_output(["mungectl", "key", "generate"])
-        except subprocess.CalledProcessError:
-            logging.fatal("Failed to generate a new munge key")
+            subprocess.check_output(
+                [
+                    "mungectl",
+                    "key",
+                    f"--keyfile={self._snap.paths.common / 'etc/munge/munge.key'}",
+                    "generate",
+                ]
+            )
+        except subprocess.CalledProcessError as e:
+            logging.error("failed to generate a new munge key. reason %s", e)
             raise
 
         self._needs_restart(["munged"])
@@ -177,12 +129,10 @@ class Munge(_BaseModel):
         """Update configuration for the `munged` service."""
         for k in config.keys():
             match k:
-                case "key":
-                    self.key = config[k]
                 case "max-thread-count":
                     self.max_thread_count = config[k]
                 case _:
-                    raise AttributeError(f"Unrecognised configuration option {k}.")
+                    raise AttributeError(f"Unrecognized configuration option {k}")
 
 
 class Slurmd(_BaseModel):
@@ -203,7 +153,7 @@ class Slurmd(_BaseModel):
         First controller in the list is the primary controller.
         """
         if self.config_server == v:
-            logging.debug("No change for `slurmd` configuration server list. Not updating.")
+            logging.debug("no change for `slurmd` configuration server list. not updating")
             return
 
         self._set_config("SLURMD_CONFIG_SERVER", str(v))
@@ -216,39 +166,7 @@ class Slurmd(_BaseModel):
                 case "config-server":
                     self.config_server = v
                 case _:
-                    raise AttributeError(f"Unrecognised configuration option {k}.")
-
-
-class Slurmdbd(_BaseModel):
-    """Manage lifecycle operations for the slurmdbd daemon."""
-
-    def __init__(self, *args) -> None:
-        super().__init__(*args)
-        self.config_file = self._snap.paths.common / "etc" / "slurm" / "slurmdbd.conf"
-
-    def update_config(self, config: Dict[str, str]) -> None:
-        """Update configuration for the `slurmdbd` service."""
-        with slurmdbdconfig.edit(self.config_file) as sconf:
-            # Preserve old configuration so that we can determine
-            # if substantial changes were made to the `slurmdbd.conf` file.
-            old = sconf.dict()
-
-            # Assemble new `slurmdbd.conf` file.
-            for k, v in config.items():
-                key = k.replace("-", "_")
-                if not hasattr(sconf, key):
-                    raise AttributeError(f"`slurmdbd` config file does not support option {key}.")
-
-                setattr(sconf, key, _apply_callback(key, v, model=sconf))
-
-            if sconf.dict() == old:
-                logging.debug("No change in `slurmdbd` service configuration. Not updating.")
-                return
-
-            logging.info("Updating `slurmdbd` configuration file %s.", self.config_file)
-            self._needs_restart(["slurmdbd"])
-
-        self.config_file.chmod(0o600)
+                    raise AttributeError(f"Unrecognized configuration option {k}")
 
 
 class Slurmrestd(_BaseModel):
@@ -267,7 +185,7 @@ class Slurmrestd(_BaseModel):
     def max_connections(self, v: int) -> None:
         """Set the maximum number of client connections to process at one time."""
         if self.max_connections == v:
-            logging.debug("No change for `slurmrestd` max connections. Not updating.")
+            logging.debug("no change for `slurmrestd` max connections. not updating")
             return
 
         self._set_config("SLURMRESTD_MAX_CONNECTIONS", str(v))
@@ -286,7 +204,7 @@ class Slurmrestd(_BaseModel):
     def max_thread_count(self, v: int) -> None:
         """Set the number of threads to spawn for processing client requests."""
         if self.max_thread_count == v:
-            logging.debug("No change for `slurmrestd` max thread count. Not updating.")
+            logging.debug("no change for `slurmrestd` max thread count. not updating")
             return
 
         self._set_config("SLURMRESTD_MAX_THREAD_COUNT", str(v))
@@ -301,144 +219,4 @@ class Slurmrestd(_BaseModel):
                 case "max-thread-count":
                     self.max_thread_count = config[k]
                 case _:
-                    raise AttributeError(f"Unrecognised configuration option {k}.")
-
-
-def _process_nodes(config: Dict[str, Dict[str, Any]]) -> NodeMap:
-    """Process node inventory from the Slurm snap configuration."""
-    node_map = NodeMap()
-    for k, v in config.items():
-        node = Node(NodeName=k)
-        for _k, _v in v.items():
-            key = _k.replace("-", "_")
-            if not hasattr(node, key):
-                raise AttributeError(f"Node: Unrecognised configuration option {key}.")
-
-            setattr(node, key, _apply_callback(key, _v, model=node))
-
-        node_map[node.node_name] = node
-
-    return node_map
-
-
-def _process_frontend_nodes(config: Dict[str, Dict[str, Any]]) -> FrontendNodeMap:
-    """Process frontend node inventory from the Slurm snap configuration."""
-    frontend_map = FrontendNodeMap()
-    for k, v in config.items():
-        node = FrontendNode(FrontendName=k)
-        for _k, _v in v.items():
-            key = _k.replace("-", "_")
-            if not hasattr(node, key):
-                raise AttributeError(f"FrontendNode: Unrecognised configuration option {key}.")
-
-            setattr(node, key, _apply_callback(key, _v, model=node))
-
-        frontend_map[node.frontend_name] = node
-
-    return frontend_map
-
-
-def _process_down_nodes(config: Dict[str, str]) -> DownNodesList:
-    """Process down nodes inventory from the Slurm snap configuration.
-
-    Only one DownNodes can be set via `snap set ...`. If extended functionality
-    beyond this is required, it's better to either directly set the configuration
-    file, or use a different method to update the `slurm.conf` file.
-    """
-    down_nodes = DownNodes()
-    for k, v in config.items():
-        match key := k.replace("-", "_"):
-            case "nodes":
-                down_nodes.down_nodes = v.split(",")
-            case "reason":
-                down_nodes.reason = v
-            case "state":
-                down_nodes.state = v
-            case _:
-                raise AttributeError(f"DownNodes: Unrecognised configuration option {key}.")
-
-    return DownNodesList([down_nodes.dict()])
-
-
-def _process_node_sets(config: Dict[str, Dict[str, Any]]) -> NodeSetMap:
-    """Process node set inventory from the Slurm snap configuration."""
-    node_set_map = NodeSetMap()
-    for k, v in config.items():
-        node = NodeSet(NodeSet=k)
-        for _k, _v in v.items():
-            key = _k.replace("-", "_")
-            if not hasattr(node, key):
-                raise AttributeError(f"NodeSet: Unrecognised configuration option {key}.")
-
-            setattr(node, key, _apply_callback(key, _v, model=node))
-
-        node_set_map[node.node_set] = node
-
-    return node_set_map
-
-
-def _process_partitions(config: Dict[str, Dict[str, Any]]) -> PartitionMap:
-    """Process partition inventory from the Slurm snap configuration."""
-    partition_map = PartitionMap()
-    for k, v in config.items():
-        part = Partition(PartitionName=k)
-        for _k, _v in v.items():
-            key = _k.replace("-", "_")
-            if not hasattr(part, key):
-                raise AttributeError(f"FrontendNode: Unrecognised configuration option {key}.")
-
-            setattr(part, key, _apply_callback(key, _v, model=part))
-
-        partition_map[part.partition_name] = part
-
-    return partition_map
-
-
-class Slurm(_BaseModel):
-    """Manage lifecycle operations for the Slurm workload manager."""
-
-    def __init__(self, *args) -> None:
-        super().__init__(*args)
-        self.config_file = self._snap.paths.common / "etc" / "slurm" / "slurm.conf"
-
-    def update_config(self, config: Dict[str, Any]) -> None:
-        """Update configuration of the Slurm workload manager."""
-        with slurmconfig.edit(self.config_file) as sconf:
-            # Preserve old configuration so that we can determine
-            # if substantial changes were made to the `slurm.conf` file.
-            old = sconf.dict()
-            # Assemble new `slurm.conf` file.
-            for k, v in config.items():
-                match key := k.replace("-", "_"):
-                    case "include":
-                        # Multiline configuration options. Requires special handling.
-                        sconf.include = v.split(",")
-                    case "slurmctld_host":
-                        # Multiline configuration options. Requires special handling.
-                        sconf.slurmctld_host = v.split(",")
-                    case "nodes":
-                        sconf.nodes = _process_nodes(v)
-                    case "frontend_nodes":
-                        sconf.frontend_nodes = _process_frontend_nodes(v)
-                    case "down_nodes":
-                        sconf.down_nodes = _process_down_nodes(v)
-                    case "node_sets":
-                        sconf.node_sets = _process_node_sets(v)
-                    case "partitions":
-                        sconf.partitions = _process_partitions(v)
-                    case _:
-                        if not hasattr(sconf, key):
-                            raise AttributeError(
-                                f"Slurm config file does not support option {key}."
-                            )
-
-                        setattr(sconf, key, _apply_callback(key, v, model=sconf))
-
-            if sconf.dict() == old:
-                logging.debug("No change in Slurm workload manager configuration. Not updating.")
-                return
-
-            logging.info("Updating Slurm configuration file %s.", self.config_file)
-            self._needs_restart(["slurmctld", "slurmd", "slurmdbd", "slurmrestd"])
-
-        self.config_file.chmod(0o600)
+                    raise AttributeError(f"Unrecognized configuration option {k}")

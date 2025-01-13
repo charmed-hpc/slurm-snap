@@ -1,4 +1,4 @@
-# Copyright 2024 Canonical Ltd.
+# Copyright 2024-2025 Canonical Ltd.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -21,7 +21,7 @@ from pathlib import Path
 from snaphelpers import Snap
 
 from .log import setup_logging
-from .models import Munge, Slurm, Slurmd, Slurmdbd, Slurmrestd
+from .models import Munged, Slurmd, Slurmrestd
 
 
 def _setup_dirs(snap: Snap) -> None:
@@ -31,7 +31,7 @@ def _setup_dirs(snap: Snap) -> None:
         snap: The Snap instance.
     """
     # Generate directories need by Slurm and Munge.
-    logging.info("Provisioning required directories for Slurm and munge.")
+    logging.info("provisioning required directories for slurm and munge")
     etc = Path(snap.paths.common) / "etc"
     var = Path(snap.paths.common) / "var"
     run = Path(snap.paths.common) / "run"
@@ -57,11 +57,11 @@ def _setup_dirs(snap: Snap) -> None:
         run / "munge",
         run / "slurm",
     ]:
-        logging.debug("Generating directory %s.", directory)
+        logging.debug("generating directory %s", directory)
         directory.mkdir(parents=True)
 
     # Set permissions on special directories
-    logging.debug("Updating directory permissions.")
+    logging.debug("updating directory permissions")
     etc.chmod(0o711)
     (etc / "munge").chmod(0o700)
     (etc / "slurm").chmod(0o755)
@@ -88,22 +88,22 @@ def install(snap: Snap) -> None:
     snap configuration, and generate a munge.key file for the host.
     """
     setup_logging(snap.paths.common / "hooks.log")
-    munge = Munge(snap)
+    munged = Munged(snap)
     slurmd = Slurmd(snap)
     slurmrestd = Slurmrestd(snap)
 
-    logging.info("Executing snap `install` hook.")
+    logging.info("executing snap `install` hook")
     _setup_dirs(snap)
     _setup_logrotate(snap)
 
-    logging.info("Setting default global configuration for snap.")
-    munge.max_thread_count = 1
+    logging.info("setting default global configuration for snap")
+    munged.max_thread_count = 1
     slurmd.config_server = ""
     slurmrestd.max_connections = 124
     slurmrestd.max_thread_count = 20
 
-    logging.info("Generating default munge.key secret.")
-    munge.generate_key()
+    logging.info("generating default munge.key secret")
+    munged.generate_key()
 
 
 def configure(snap: Snap) -> None:
@@ -114,27 +114,17 @@ def configure(snap: Snap) -> None:
         "munge", "slurm", "slurmd", "slurmdbd", "slurmrestd"
     ).as_dict()
 
-    if "munge" in options:
-        logging.info("Updating the `munged` service's configuration.")
-        munge = Munge(snap)
-        munge.update_config(options["munge"])
-
-    if "slurm" in options:
-        logging.info("Updating Slurm workload manager configuration.")
-        slurm = Slurm(snap)
-        slurm.update_config(options["slurm"])
+    if "munged" in options:
+        logging.info("updating the `munged` service's configuration")
+        munged = Munged(snap)
+        munged.update_config(options["munged"])
 
     if "slurmd" in options:
-        logging.info("Updating `slurmd` service configuration.")
+        logging.info("updating `slurmd` service configuration")
         slurmd = Slurmd(snap)
         slurmd.update_config(options["slurmd"])
 
-    if "slurmdbd" in options:
-        logging.info("Updating `slurmdbd` service configuration.")
-        slurmdbd = Slurmdbd(snap)
-        slurmdbd.update_config(options["slurmdbd"])
-
     if "slurmrestd" in options:
-        logging.info("Updating `slurmrestd` service configuration.")
+        logging.info("updating `slurmrestd` service configuration")
         slurmrestd = Slurmrestd(snap)
         slurmrestd.update_config(options["slurmrestd"])
