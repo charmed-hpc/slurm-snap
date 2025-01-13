@@ -1,4 +1,4 @@
-# Copyright 2024 Canonical Ltd.
+# Copyright 2024-2025 Canonical Ltd.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -53,8 +53,8 @@ jobs:
         with:
           architecture: ${{ matrix.architecture }}
           launchpad-token: ${{ secrets.LP_BUILD }}
-          store-token: ${{ secrets.SNAP_STORE_CANDIDATE }} # Expires October 30th, 2024
-          repo-token: ${{ secrets.UBUNTU_HPC_BOT_TOKEN }} # Expires October 30th, 2024
+          store-token: ${{ secrets.SNAP_STORE_CANDIDATE }}
+          repo-token: ${{ secrets.UBUNTU_HPC_BOT_TOKEN }}
           bot-name: "Ubuntu HPC Bot"
           bot-email: "nuccitheboss+ubuntuhpcbot@ubuntu.com"
 
