@@ -12,14 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Check if the Slurm snap exists before running a recipe.
-_check_snap_exists:
-    @[ -f slurm_*.snap ] || \
-        { echo "Slurm snap must be built for this recipe to run. Run \`just snap\` to build snap". \
-        && exit 1; }
-
 # Build snap
-snap:
+snap: clean
     snapcraft -v pack
 
 # Apply coding style standards to project
@@ -35,7 +29,7 @@ unit:
     tox run -e unit
 
 # Run integration tests
-integration: _check_snap_exists
+integration: snap
     #!/usr/bin/env bash
     cp slurm_*.snap tests/integration/configless-slurm/testdata/slurm.snap
     pushd tests/integration/configless-slurm
