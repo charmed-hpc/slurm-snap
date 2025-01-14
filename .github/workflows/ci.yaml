@@ -79,16 +79,18 @@ jobs:
         uses: extractions/setup-just@v2
         with:
           just-version: 1.38.0
+      - name: Set up snapcraft
+        run: |
+          sudo snap install snapcraft --classic
       - name: Set up gambol
         run: |
           sudo snap install gambol
-      - name: Build the Slurm snap
-        run: |
-          sudo snap install snapcraft --classic
-          just snap
       - name: Configure LXD to run a mini-HPC cluster
         run: |
           lxc network set lxdbr0 ipv6.address none
+          lxc project create integration-test
+          lxc profile copy --refresh --target-project=integration-test default default
+          lxc project switch integration-test
           lxc profile set default security.privileged true
           lxc profile set default security.nesting true
           lxc profile set default raw.apparmor 'mount fstype=nfs*, mount fstype=rpc_pipefs,'
