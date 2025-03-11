@@ -85,9 +85,8 @@ apps:
     daemon: simple
     install-mode: disable
     after: [munged]
-  slurm-prometheus-exporter:
-    # yamllint disable-line rule:line-length
-    command: bin/prometheus-slurm-exporter -slurm.cli-fallback -slurm.collect-diags
+  prometheus-slurm-exporter:
+    command: sbin/prometheus-slurm-exporter.wrapper
     daemon: simple
     install-mode: disable
     after: [munged]
@@ -306,7 +305,7 @@ parts:
         --with-pmix
       make -j${CRAFT_PARALLEL_BUILD_COUNT} && make install
 
-  slurm-prometheus-exporter:
+  prometheus-slurm-exporter:
     after: [slurm]
     source: "https://github.com/rivosinc/prometheus-slurm-exporter.git"
     source-tag: "v1.4.1"
