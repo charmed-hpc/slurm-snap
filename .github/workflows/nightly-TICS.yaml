@@ -1,0 +1,48 @@
+name: Nightly TICS scan
+
+on:
+  schedule:
+    - cron: '17 15 * * *' # Every day at 15:17 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  TICS:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          python3 -m pip install tox pylint flake8
+          python3 -m pip install --requirement requirements.txt
+      
+      - name: Install Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.22"
+      
+      - name: go mod download
+        working-directory: src/mungectl
+        run: go mod download
+      
+      - name: Build and run coverage tests
+        run: |
+          make unit
+          pushd src/mungectl
+          go build -v -a ./...
+          popd
+
+      - name: TICS GitHub Action
+        uses: tiobe/tics-github-action@v3
+        with:
+          mode: qserver
+          project: slurm-snap
+          viewerUrl: https://canonical.tiobe.com/tiobeweb/TICS/api/cfg?name=default
+          branchdir: ${{ env.GITHUB_WORKSPACE }}
+          ticsAuthToken: ${{ secrets.TICS_AUTH_TOKEN }}
+          installTics: true
+          calc: ALL
