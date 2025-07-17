@@ -54,10 +54,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      - name: Set up just
-        uses: extractions/setup-just@v2
-        with:
-          just-version: 1.38.0
+      - name: Install `just`
+        run: sudo snap install just --classic
       - name: Install dependencies
         run: |
           python3 -m pip install tox
@@ -70,10 +68,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      - name: Set up just
-        uses: extractions/setup-just@v2
-        with:
-          just-version: 1.38.0
+      - name: Install `just`
+        run: sudo snap install just --classic
       - name: Install dependencies
         run: |
           python3 -m pip install tox
@@ -95,10 +91,8 @@ jobs:
         uses: canonical/setup-lxd@v0.1.1
         with:
           channel: 5.21/stable
-      - name: Set up just
-        uses: extractions/setup-just@v2
-        with:
-          just-version: 1.38.0
+      - name: Install `just`
+        run: sudo snap install just --classic
       - name: Set up snapcraft
         run: |
           sudo snap install snapcraft --classic
