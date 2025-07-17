@@ -16,11 +16,11 @@
 snap: clean
     snapcraft -v pack
 
-# Apply coding style standards to project
+# Apply coding style standards to code
 fmt:
     tox run -e fmt
 
-# Check project against coding style standards
+# Check code against coding style standards
 lint:
     tox run -e lint
 
